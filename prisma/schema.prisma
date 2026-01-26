@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+
+enum UserRole {
+  USER
+  BARBER_OWNER
+  ADMIN
+}
+
+// Status do agendamento para a Dashboard
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// --- MODELS ---
+
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  name     String
+  phone    String? // Para WhatsApp
+  password String? // Opcional: só se um dia eu não usar Google Login
+
+  role UserRole @default(USER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings         Booking[]
+  ownedBarbershops BarberShop[] @relation("BarberOwner")
+}
+
+model BarberShop {
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  phone       String
+  description String
+  imageUrl    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  slug String @unique // URL única
+
+  // Quem é o dono?
+  ownerId String?
+  owner   User?   @relation("BarberOwner", fields: [ownerId], references: [id])
+
+  // Assinatura (Preparo para o Stripe)
+  stripeCustomerId   String?
+  subscriptionStatus String? @default("INACTIVE")
+
+  // Relacionamentos
+  services BarberServices[]
+  bookings Booking[]
+}
+
+model BarberServices {
+  id           String     @id @default(uuid())
+  name         String
+  description  String
+  imageUrl     String
+  price        Decimal    @db.Decimal(10, 2)
+  barberShopId String
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
+  bookings     Booking[]
+}
+
+model Booking {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id])
+  barberShopId String
+  barberShop   BarberShop     @relation(fields: [barberShopId], references: [id])
+  serviceId    String
+  service      BarberServices @relation(fields: [serviceId], references: [id])
+  date         DateTime
+
+  // Controle da Agenda
+  status BookingStatus @default(CONFIRMED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -44,8 +44,6 @@ export const Page = async () => {
           ))}
         </div>
       </div>
-      {/*Footer*/}
-      <Footer />
     </>
   )
 }

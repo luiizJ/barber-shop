@@ -28,7 +28,7 @@ async function main() {
     data: {
       name: "Vintage Barber",
       address: "Rua da Tecnologia, 777 - Cabedelo, PB",
-      phone: "(83) 98888-8888",
+      phones: ["(83) 98888-8888", "(83) 97777-7777"],
       description:
         "A melhor barbearia de Cabedelo. Estilo clássico, gestão moderna.",
       imageUrl:
@@ -57,11 +57,26 @@ async function main() {
       description: "Modelagem completa e toalha quente.",
       price: 40.0,
       imageUrl:
-        "https://utfs.io/f/45331760-899c-4b4b-910e-e00babb6ed81-16q.png",
+        "https://utfs.io/f/e6bdffb6-24a9-455b-aba3-903c2c2b5bde-1jo6tu.png",
     },
     {
-      name: "Pezinho",
+      name: "Acabameto",
       description: "Acabamento perfeito para um visual renovado.",
+      price: 15.0,
+      imageUrl:
+        "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
+    },
+    {
+      name: "Sobrancelha",
+      description:
+        "Ideal para quem deseja um visual moderno, atraente e preenchimento de falhas.",
+      price: 15.0,
+      imageUrl:
+        "https://utfs.io/f/2118f76e-89e4-43e6-87c9-8f157500c333-b0ps0b.png",
+    },
+    {
+      name: "Pigmentação",
+      description: "Pigmentação perfeita para um visual renovado.",
       price: 15.0,
       imageUrl:
         "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",

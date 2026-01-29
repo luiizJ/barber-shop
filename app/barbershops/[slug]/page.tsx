@@ -1,6 +1,15 @@
+import BarberPhone from "@/app/components/BarberPhone"
+import BarberShopServices from "@/app/components/BarberShopServices"
 import { Button } from "@/app/components/ui/button"
 import { db } from "@/app/lib/prisma"
-import { ChevronLeft, MapPinIcon, MenuIcon, Star, StarIcon } from "lucide-react"
+import {
+  ChevronLeft,
+  MapPinIcon,
+  MenuIcon,
+  PhoneIcon,
+  Star,
+  StarIcon,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -19,7 +28,11 @@ const BarberShopPage = async ({ params }: BarberShopPageProps) => {
     where: {
       slug: slug,
     },
+    include: {
+      services: true,
+    },
   })
+  console.log(barbershop)
   // 3. Se não achar, joga pro 404 oficial do Next, implementar nova badRequest depois..
   if (!barbershop) {
     return notFound()
@@ -67,9 +80,29 @@ const BarberShopPage = async ({ params }: BarberShopPageProps) => {
         </div>
       </div>
       {/* Area da Descriçao */}
-      <div className="space-y-3 border-b border-solid p-5">
+      <div className="space-y-2 border-b border-solid p-5">
         <h2 className="text-xs font-bold text-gray-400 uppercase">Sobre Nos</h2>
         <p className="text-justify text-sm">{barbershop.description}</p>
+      </div>
+      {/* Area dos Serviços */}
+      <div className="p-5">
+        <h2 className="mb-3 text-xs font-bold text-gray-400 uppercase">
+          Serviços
+        </h2>
+        <div className="space-y-3 p-1">
+          {barbershop.services.map((service) => (
+            <BarberShopServices services={service} key={service.id} />
+          ))}
+        </div>
+        {/* Area dos Contatos */}
+        <div className="mt-5 space-y-3 border-t border-solid p-5">
+          <h2 className="text-xs font-bold text-gray-400 uppercase">
+            Contatos
+          </h2>
+          {barbershop.phones.map((phone) => (
+            <BarberPhone phone={phone} key={phone} />
+          ))}
+        </div>
       </div>
     </>
   )

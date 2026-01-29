@@ -1,4 +1,10 @@
-import { CalendarIcon, HomeIcon, LogOutIcon, MenuIcon } from "lucide-react"
+import {
+  CalendarIcon,
+  HomeIcon,
+  LogInIcon,
+  LogOutIcon,
+  MenuIcon,
+} from "lucide-react"
 import { Button } from "./ui/button"
 import {
   Sheet,
@@ -12,6 +18,14 @@ import { Avatar, AvatarImage } from "./ui/avatar"
 import Link from "next/link"
 import { searchCategory } from "../constants/searchCategory"
 import Image from "next/image"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog"
 
 const Sidebar = () => {
   return (
@@ -20,14 +34,39 @@ const Sidebar = () => {
         <SheetTitle className="text-left">Menu</SheetTitle>
       </SheetHeader>
 
-      <div className="flex items-center gap-3 border-b border-solid p-2 pb-5">
-        <Avatar>
+      <div className="flex items-center justify-between gap-3 border-b border-solid p-2 pb-5">
+        <h2 className="text-lg font-bold">Faça Seu Login</h2>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button size={"icon"}>
+              <LogInIcon size={18} />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[70%]">
+            <DialogHeader>
+              <DialogTitle>Faça Seu Login</DialogTitle>
+              <DialogDescription>
+                Conecte-se Usando Sua Conta Google
+              </DialogDescription>
+            </DialogHeader>
+            <Button className="text-[15px] font-bold">
+              <Image
+                src={"/googleIcon.svg"}
+                alt={"fazer login com google"}
+                width={17}
+                height={17}
+              />
+              Google
+            </Button>
+          </DialogContent>
+        </Dialog>
+        {/* <Avatar>
           <AvatarImage src="/img2.png" alt="Avatar" width={48} height={48} />
         </Avatar>
         <div className="flex flex-col">
           <span className="font-bold">Luizin Dugrau</span>
           <span className="text-xs">@luizindugrau155@hotmail.com</span>
-        </div>
+        </div> */}
       </div>
 
       <div className="flex flex-col gap-2 border-b border-solid">

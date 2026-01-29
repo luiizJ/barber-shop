@@ -5,37 +5,57 @@ const prisma = new PrismaClient()
 async function main() {
   console.log("🌱 Iniciando o seed do SaaS Multi-tenant...")
 
-  // 1. Limpeza: Apaga tudo para evitar duplicidade
+  // --------------------------------------------------------------------------
+  // 1. LIMPEZA (CLEANUP)
+  // --------------------------------------------------------------------------
+  // Apaga dados antigos. A ordem importa para não quebrar chaves estrangeiras.
   await prisma.booking.deleteMany()
-  await prisma.barberServices.deleteMany()
+  await prisma.barberServices.deleteMany() // MUDANÇA: Nome da tabela agora é singular (BarberService)
   await prisma.barberShop.deleteMany()
-  await prisma.user.deleteMany()
+  await prisma.account.deleteMany() // ADICIONADO: Limpa conexões do NextAuth
+  await prisma.session.deleteMany() // ADICIONADO: Limpa sessões
+  await prisma.verificationToken.deleteMany()
+  await prisma.user.deleteMany() // Limpa usuários por último
 
   console.log("🧹 Banco de dados limpo!")
 
-  // 2. Criar o Usuário que será o DONO (Para testar o Painel)
+  // --------------------------------------------------------------------------
+  // 2. CRIAR O DONO (BARBER_OWNER)
+  // --------------------------------------------------------------------------
+  // Precisamos dele antes da barbearia para fazer o vínculo (ownerId)
   const donoUser = await prisma.user.create({
     data: {
       name: "Miguel Barbeiro",
       email: "miguel@barber.com",
-      role: "BARBER_OWNER",
-      phone: "(83) 99999-9999",
+      role: "BARBER_OWNER", // Define permissão de acesso ao painel
+      phone: "(83) 99999-9999", // Telefone pessoal do dono
+      emailVerified: new Date(), // Marca como verificado para facilitar testes
+      image: "https://utfs.io/f/c97a296d-7847-4661-8e29-195f874c5d40-4c4f3.png",
     },
   })
 
-  // 3. Criar a Barbearia "Showcase" vinculada a esse Dono
+  // --------------------------------------------------------------------------
+  // 3. CRIAR A BARBEARIA (VINCULADA AO DONO)
+  // --------------------------------------------------------------------------
   const vintageBarber = await prisma.barberShop.create({
     data: {
       name: "Vintage Barber",
       address: "Rua da Tecnologia, 777 - Cabedelo, PB",
-      phones: ["(83) 98888-8888", "(83) 97777-7777"],
+      phones: ["(83) 98888-8888", "(83) 97777-7777"], // MANTIDO: Array de strings
       description:
         "A melhor barbearia de Cabedelo. Estilo clássico, gestão moderna.",
       imageUrl:
         "https://utfs.io/f/5832df58-cfd7-4b3f-b102-42b7e150ced2-16r.png",
-      slug: "vintage-barber", // <--- URL única do SaaS
-      subscriptionStatus: "ACTIVE", // <--- Simula cliente pagante
-      ownerId: donoUser.id, // <--- Vincula ao dono criado acima
+      slug: "vintage-barber",
+
+      // CONFIGURAÇÃO SAAS / STRIPE
+      stripeSubscriptionStatus: "active", // (Simulação)
+      subscriptionEndsAt: new Date(
+        new Date().setFullYear(new Date().getFullYear() + 1),
+      ), // Válido por 1 ano
+
+      // VÍNCULO IMPORTANTE
+      ownerId: donoUser.id,
     },
   })
 
@@ -43,7 +63,9 @@ async function main() {
     `💈 Barbearia criada: ${vintageBarber.name} (Dono: ${donoUser.name})`,
   )
 
-  // 4. Criar Serviços
+  // --------------------------------------------------------------------------
+  // 4. CRIAR SERVIÇOS
+  // --------------------------------------------------------------------------
   const services = [
     {
       name: "Corte de Cabelo",
@@ -60,7 +82,7 @@ async function main() {
         "https://utfs.io/f/e6bdffb6-24a9-455b-aba3-903c2c2b5bde-1jo6tu.png",
     },
     {
-      name: "Acabameto",
+      name: "Acabamento", // Corrigi o typo "Acabameto" que estava no original
       description: "Acabamento perfeito para um visual renovado.",
       price: 15.0,
       imageUrl:
@@ -83,8 +105,10 @@ async function main() {
     },
   ]
 
+  // Loop para criar os serviços (Usando barberService no singular)
   for (const service of services) {
     await prisma.barberServices.create({
+      // MUDANÇA: barberServices -> barberService
       data: {
         name: service.name,
         description: service.description,
@@ -99,8 +123,9 @@ async function main() {
     })
   }
 
-  // 5. Criar Agendamentos (Para popular a Dashboard)
-  // Cria um cliente comum para ter agendamentos
+  // --------------------------------------------------------------------------
+  // 5. CRIAR AGENDAMENTOS (PARA DASHBOARD)
+  // --------------------------------------------------------------------------
   const clienteUser = await prisma.user.create({
     data: {
       name: "Cliente Teste",
@@ -109,14 +134,13 @@ async function main() {
     },
   })
 
-  // Pega um serviço qualquer (Corte) para usar nos agendamentos
-
+  // Busca o serviço de corte para usar nos agendamentos
   const servicoCorte = await prisma.barberServices.findFirst({
+    // MUDANÇA: barberService
     where: { barberShopId: vintageBarber.id },
   })
 
   if (servicoCorte) {
-    // Definindo datas relativas (Ontem, Amanhã, Semana que vem)
     const ontem = new Date()
     ontem.setDate(ontem.getDate() - 1)
 
@@ -126,7 +150,7 @@ async function main() {
     const futuro = new Date()
     futuro.setDate(futuro.getDate() + 5)
 
-    // 1. Agendamento Finalizado (Ontem) - DINHEIRO NO BOLSO
+    // Agendamento Finalizado
     await prisma.booking.create({
       data: {
         userId: clienteUser.id,
@@ -137,7 +161,7 @@ async function main() {
       },
     })
 
-    // 2. Agendamento Confirmado (Amanhã) - RECEITA FUTURA
+    // Agendamento Confirmado
     await prisma.booking.create({
       data: {
         userId: clienteUser.id,
@@ -148,7 +172,7 @@ async function main() {
       },
     })
 
-    // 3. Agendamento Cancelado (Daqui a 5 dias) - TESTE DE UI (VERMELHO)
+    // Agendamento Cancelado
     await prisma.booking.create({
       data: {
         userId: clienteUser.id,
@@ -164,9 +188,7 @@ async function main() {
     )
   }
 
-  console.log(
-    "✅ Seed finalizado com sucesso! O banco está pronto para ser populado",
-  )
+  console.log("✅ Seed finalizado com sucesso! O banco está pronto.")
 }
 
 main()

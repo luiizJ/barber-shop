@@ -1,19 +1,10 @@
-import { CalendarIcon, HomeIcon, LogOutIcon, MenuIcon } from "lucide-react"
-import { Button } from "./ui/button"
 import { Card, CardContent } from "./ui/card"
 import Link from "next/link"
 import Image from "next/image"
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "./ui/sheet"
-import { searchCategory } from "../constants/searchCategory"
-import { Avatar } from "./ui/avatar"
-import { AvatarImage } from "@radix-ui/react-avatar"
+import Sidebar from "./Sidebar"
+import { MenuIcon, Sheet } from "lucide-react"
+import { SheetTrigger } from "./ui/sheet"
+import { Button } from "./ui/button"
 
 const Header = async () => {
   return (
@@ -34,80 +25,7 @@ const Header = async () => {
                 <MenuIcon />
               </Button>
             </SheetTrigger>
-
-            <SheetContent className="overflow-y-auto [&::-webkit-scrollbar]:hidden">
-              <SheetHeader className="py-5 text-left">
-                <SheetTitle className="left">Menu</SheetTitle>
-              </SheetHeader>
-
-              <div className="flex items-center gap-3 border-b border-solid p-3">
-                <Avatar>
-                  <AvatarImage
-                    src="/img2.png"
-                    alt="Avatar"
-                    width={48}
-                    height={48}
-                  />
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="font-bold">Luizin Dugrau</span>
-                  <span className="text-xs">@luizindugrau155@hotmail.com</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 border-b border-solid py-2">
-                <SheetClose asChild>
-                  <Button
-                    className="justify-start gap-2"
-                    variant={"ghost"}
-                    asChild
-                  >
-                    <Link href="/">
-                      <HomeIcon size={18} />
-                      Inicio
-                    </Link>
-                  </Button>
-                </SheetClose>
-                <Button
-                  className="justify-start gap-2"
-                  variant={"ghost"}
-                  asChild
-                >
-                  <Link href="/Agendamentos">
-                    <CalendarIcon size={18} />
-                    Agendamentos
-                  </Link>
-                </Button>
-              </div>
-
-              <div className="flex flex-col gap-2 p-5">
-                {searchCategory.map((services) => (
-                  <Button
-                    className="justify-start gap-2"
-                    variant={"ghost"}
-                    key={services.id}
-                    asChild
-                  >
-                    <Link href="/">
-                      <Image
-                        src={services.imageUrl}
-                        alt={services.title}
-                        width={18}
-                        height={18}
-                      />
-                      {services.title}
-                    </Link>
-                  </Button>
-                ))}
-              </div>
-
-              <div className="flex flex-col gap-2 border-t border-solid p-3">
-                <Button className="gap-2">
-                  <LogOutIcon size={18} />
-                  Sair da conta
-                </Button>
-              </div>
-            </SheetContent>
+            <Sidebar />
           </Sheet>
         </CardContent>
       </Card>

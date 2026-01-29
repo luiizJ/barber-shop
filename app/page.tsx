@@ -2,7 +2,6 @@ import Header from "./components/Header"
 import { BarbershopEstablishments } from "./components/BarbershopEstablishments"
 import { db } from "./lib/prisma"
 import Booking from "./components/Booking"
-import Footer from "./components/Footer"
 import SearchBarberShops from "./components/SearchBarberShops"
 import EclusiveBanner from "./components/ExclusiveBanner"
 

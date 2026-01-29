@@ -1,15 +1,10 @@
 import BarberPhone from "@/app/components/BarberPhone"
 import BarberShopServices from "@/app/components/BarberShopServices"
+import Sidebar from "@/app/components/Sidebar"
 import { Button } from "@/app/components/ui/button"
+import { Sheet, SheetTrigger } from "@/app/components/ui/sheet"
 import { db } from "@/app/lib/prisma"
-import {
-  ChevronLeft,
-  MapPinIcon,
-  MenuIcon,
-  PhoneIcon,
-  Star,
-  StarIcon,
-} from "lucide-react"
+import { ChevronLeft, MapPinIcon, MenuIcon, StarIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -32,7 +27,6 @@ const BarberShopPage = async ({ params }: BarberShopPageProps) => {
       services: true,
     },
   })
-  console.log(barbershop)
   // 3. Se não achar, joga pro 404 oficial do Next, implementar nova badRequest depois..
   if (!barbershop) {
     return notFound()
@@ -58,14 +52,18 @@ const BarberShopPage = async ({ params }: BarberShopPageProps) => {
             <ChevronLeft />
           </Link>
         </Button>
-
-        <Button
-          size={"icon"}
-          variant={"secondary"}
-          className="absolute top-4 right-4"
-        >
-          <MenuIcon />
-        </Button>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              size="icon"
+              variant="outline"
+              className="absolute top-4 right-4"
+            >
+              <MenuIcon />
+            </Button>
+          </SheetTrigger>
+          <Sidebar />
+        </Sheet>
       </div>
       {/* Area do titulo / endereço */}
       <div className="border-b border-solid p-5">

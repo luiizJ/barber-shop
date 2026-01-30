@@ -113,22 +113,19 @@ const Sidebar = () => {
 
       <div className="flex flex-col gap-2">
         {searchCategory.map((services) => (
-          <Button
-            className="justify-start gap-2"
-            variant={"ghost"}
-            key={services.id}
-            asChild
-          >
-            <Link href="/">
-              <Image
-                src={services.imageUrl}
-                alt={services.title}
-                width={18}
-                height={18}
-              />
-              {services.title}
-            </Link>
-          </Button>
+          <SheetClose key={services.id} asChild>
+            <Button className="justify-start gap-2" variant={"ghost"} asChild>
+              <Link href={`/barbershops?search=${services.title}`}>
+                <Image
+                  src={services.imageUrl}
+                  alt={services.title}
+                  width={18}
+                  height={18}
+                />
+                {services.title}
+              </Link>
+            </Button>
+          </SheetClose>
         ))}
       </div>
 

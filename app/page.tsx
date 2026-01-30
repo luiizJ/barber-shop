@@ -1,9 +1,9 @@
 import Header from "./components/Header"
-import { BarbershopEstablishments } from "./components/BarbershopEstablishments"
+import BarbershopItem from "./components/BarbershopItem"
 import { db } from "./lib/prisma"
 import Booking from "./components/Booking"
-import SearchBarberShops from "./components/SearchBarberShops"
 import EclusiveBanner from "./components/ExclusiveBanner"
+import SearchbarberShops from "./components/SearchbarberShops"
 
 export const Page = async () => {
   const barberShop = await db.barberShop.findMany({})
@@ -14,7 +14,9 @@ export const Page = async () => {
         <h2 className="text-xl font-bold">Ola, Usuario!</h2>
         <p>Terça feira, 27 de janeiro de 2026</p>
         {/*Busca / Categoria */}
-        <SearchBarberShops />
+        <div className="mt-6">
+          <SearchbarberShops />
+        </div>
         {/*Banner Principal*/}
         <EclusiveBanner />
         {/*Agendamentos*/}
@@ -25,10 +27,7 @@ export const Page = async () => {
         </h2>
         <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden">
           {barberShop.map((barberShop) => (
-            <BarbershopEstablishments
-              key={barberShop.id}
-              barberShop={barberShop}
-            />
+            <BarbershopItem key={barberShop.id} barberShop={barberShop} />
           ))}
         </div>
         <h2 className="mt-6 mb-3 text-xs font-bold text-gray-400 uppercase">
@@ -36,10 +35,7 @@ export const Page = async () => {
         </h2>
         <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden">
           {barberShop.map((barberShop) => (
-            <BarbershopEstablishments
-              key={barberShop.id}
-              barberShop={barberShop}
-            />
+            <BarbershopItem key={barberShop.id} barberShop={barberShop} />
           ))}
         </div>
       </div>

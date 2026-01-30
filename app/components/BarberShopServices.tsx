@@ -1,11 +1,11 @@
-import type { BarberServices } from "@prisma/client"
+import { BarberServices, BarberShop } from "@prisma/client"
 import Image from "next/image"
 import { Button } from "./ui/button"
 import { Card, CardContent } from "./ui/card"
 import Link from "next/link"
 
 interface BarberShopServicesProps {
-  services: BarberServices
+  services: BarberServices & { barbershop?: BarberShop }
 }
 
 const BarberShopServices = ({ services }: BarberShopServicesProps) => {
@@ -21,14 +21,24 @@ const BarberShopServices = ({ services }: BarberShopServicesProps) => {
             alt={services.name}
           />
         </div>
+
         {/* Area do conteudo */}
-        <div className="flex flex-1 flex-col space-y-3">
+        <div className="flex flex-1 flex-col space-y-2">
           <div className="space-y-1">
+            {/* SE TIVER BARBEARIA (Modo Pesquisa), MOSTRA O NOME DELA */}
+            {services.barbershop && (
+              <p className="text-primary text-xs font-bold uppercase">
+                {services.barbershop.name}
+              </p>
+            )}
+
             <h3 className="text-sm font-semibold">{services.name}</h3>
+
             <p className="line-clamp-2 text-sm text-gray-400">
               {services.description}
             </p>
           </div>
+
           {/* Area do botao e preço */}
           <div className="mt-auto flex w-full items-center justify-between">
             <p className="text-primary text-sm font-bold">
@@ -37,8 +47,21 @@ const BarberShopServices = ({ services }: BarberShopServicesProps) => {
                 currency: "BRL",
               }).format(Number(services.price))}
             </p>
-            <Button size="sm" variant={"secondary"} asChild>
-              <Link href={"/Agendamentos"}>Agendar</Link>
+
+            {/* LÓGICA INTELIGENTE DO BOTÃO */}
+            <Button size="sm" variant="secondary" asChild>
+              {/* Se tiver barbearia (estou na pesquisa) -> Vai para a página da loja
+                   Se não tiver (já estou na loja) -> Vai para Agendamentos (ou abre modal depois)
+                */}
+              <Link
+                href={
+                  services.barbershop
+                    ? `/barbershops/${services.barbershop.id}`
+                    : "/Agendamentos"
+                }
+              >
+                {services.barbershop ? "Ver Loja" : "Agendar"}
+              </Link>
             </Button>
           </div>
         </div>

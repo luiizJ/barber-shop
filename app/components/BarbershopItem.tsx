@@ -10,9 +10,7 @@ interface BarberShopItemProps {
   barberShop: BarberShop
 }
 
-export const BarbershopEstablishments = ({
-  barberShop,
-}: BarberShopItemProps) => {
+const BarbershopItem = ({ barberShop }: BarberShopItemProps) => {
   return (
     <>
       <Card className="min-w-[170px] rounded-2xl py-2">
@@ -72,3 +70,5 @@ export const BarbershopEstablishments = ({
     </>
   )
 }
+
+export default BarbershopItem

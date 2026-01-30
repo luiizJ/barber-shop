@@ -2,8 +2,8 @@ import { Card, CardContent } from "./ui/card"
 import Link from "next/link"
 import Image from "next/image"
 import Sidebar from "./Sidebar"
-import { MenuIcon, Sheet } from "lucide-react"
-import { SheetTrigger } from "./ui/sheet"
+import { MenuIcon } from "lucide-react"
+import { Sheet, SheetTrigger } from "./ui/sheet"
 import { Button } from "./ui/button"
 
 const Header = async () => {

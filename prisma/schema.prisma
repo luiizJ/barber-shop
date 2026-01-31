@@ -137,6 +137,7 @@ model Booking {
   // Serviço
   serviceId String
   service   BarberServices @relation(fields: [serviceId], references: [id])
+  price     Decimal        @db.Decimal(10, 2)
 
   date   DateTime
   status BookingStatus @default(CONFIRMED)

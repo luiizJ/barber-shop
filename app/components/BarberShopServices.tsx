@@ -3,9 +3,20 @@ import Image from "next/image"
 import { Button } from "./ui/button"
 import { Card, CardContent } from "./ui/card"
 import Link from "next/link"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet"
+import { Calendar } from "./ui/calendar"
+import { ptBR } from "date-fns/locale"
+import CalendarBr from "./Scheduling"
+import Scheduling from "./Scheduling"
 
 interface BarberShopServicesProps {
-  services: BarberServices & { barbershop?: BarberShop }
+  services: BarberServices & { barberShop?: BarberShop }
 }
 
 const BarberShopServices = ({ services }: BarberShopServicesProps) => {
@@ -26,9 +37,9 @@ const BarberShopServices = ({ services }: BarberShopServicesProps) => {
         <div className="flex flex-1 flex-col space-y-2">
           <div className="space-y-1">
             {/* SE TIVER BARBEARIA (Modo Pesquisa), MOSTRA O NOME DELA */}
-            {services.barbershop && (
+            {services.barberShop && (
               <p className="text-primary text-xs font-bold uppercase">
-                {services.barbershop.name}
+                Oferecido por {services.barberShop.name}
               </p>
             )}
 
@@ -49,20 +60,26 @@ const BarberShopServices = ({ services }: BarberShopServicesProps) => {
             </p>
 
             {/* LÓGICA INTELIGENTE DO BOTÃO */}
-            <Button size="sm" variant="secondary" asChild>
-              {/* Se tiver barbearia (estou na pesquisa) -> Vai para a página da loja
-                   Se não tiver (já estou na loja) -> Vai para Agendamentos (ou abre modal depois)
-                */}
-              <Link
-                href={
-                  services.barbershop
-                    ? `/barbershops/${services.barbershop.id}`
-                    : "/Agendamentos"
-                }
-              >
-                {services.barbershop ? "Ver Loja" : "Agendar"}
-              </Link>
-            </Button>
+            {services.barberShop ? (
+              // CENÁRIO 1: MODO PESQUISA (Apenas navega para a loja)
+              <Button size="sm" variant="secondary" asChild>
+                <Link href={`/barbershops/${services.barberShop.slug}`}>
+                  Ver Loja
+                </Link>
+              </Button>
+            ) : (
+              // CENÁRIO 2: MODO AGENDAMENTO (Abre o Modal/Sheet)
+              <Scheduling
+                service={{
+                  id: services.id,
+                  barberShopId: services.barberShopId,
+                  name: services.name,
+                  description: services.description,
+                  imageUrl: services.imageUrl,
+                  price: Number(services.price),
+                }}
+              />
+            )}
           </div>
         </div>
       </CardContent>

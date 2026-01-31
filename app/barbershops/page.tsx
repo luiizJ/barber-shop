@@ -4,15 +4,20 @@ import BarberShopServices from "@/app/components/BarberShopServices" // Card do 
 import Header from "@/app/components/Header"
 import { redirect } from "next/navigation"
 import SearchbarberShops from "../components/SearchbarberShops"
+import type { BarberShop } from "@prisma/client"
 
 interface BarbershopsPageProps {
   searchParams: Promise<{
     search?: string
     service?: string
   }>
+  barberShop?: BarberShop
 }
 
-const BarbershopsPage = async (props: BarbershopsPageProps) => {
+const BarbershopsPage = async (
+  props: BarbershopsPageProps,
+  barberShop?: BarberShop,
+) => {
   const searchParams = await props.searchParams
 
   if (!searchParams.search && !searchParams.service) {

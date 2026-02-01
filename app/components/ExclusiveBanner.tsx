@@ -1,6 +1,6 @@
 import Image from "next/image"
 
-const EclusiveBanner = () => {
+const ExclusiveBanner = () => {
   return (
     <div className="relative mt-6 h-[150px] w-full">
       <Image
@@ -13,4 +13,4 @@ const EclusiveBanner = () => {
   )
 }
 
-export default EclusiveBanner
+export default ExclusiveBanner

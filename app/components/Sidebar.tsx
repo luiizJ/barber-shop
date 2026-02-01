@@ -104,7 +104,7 @@ const Sidebar = () => {
           </Button>
         </SheetClose>
         <Button className="mb-4 justify-start gap-2" variant={"ghost"} asChild>
-          <Link href="/Agendamentos">
+          <Link href={`${session?.user ? "/bookings" : ""}`}>
             <CalendarIcon size={18} />
             Agendamentos
           </Link>

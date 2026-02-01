@@ -78,7 +78,7 @@ enum UserRole {
 enum BookingStatus {
   CONFIRMED
   CANCELLED
-  COMPLETED
+  PENDING
 }
 
 // --- MODELS DO SAAS ---

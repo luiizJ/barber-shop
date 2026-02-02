@@ -1,21 +1,8 @@
 "use client"
 import { signIn, signOut, useSession } from "next-auth/react"
-import {
-  CalendarIcon,
-  HomeIcon,
-  LogInIcon,
-  LogOutIcon,
-  MenuIcon,
-} from "lucide-react"
+import { CalendarIcon, HomeIcon, LogInIcon, LogOutIcon } from "lucide-react"
 import { Button } from "./ui/button"
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "./ui/sheet"
+import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
 import { Avatar, AvatarImage } from "./ui/avatar"
 import Link from "next/link"
 import { searchCategory } from "../constants/searchCategory"

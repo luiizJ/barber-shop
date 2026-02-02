@@ -16,7 +16,6 @@ import { Card, CardContent, CardTitle } from "./ui/card"
 import { ptBR } from "date-fns/locale"
 import { signIn, useSession } from "next-auth/react"
 import { toast } from "sonner"
-// 👇 Verifique se seus caminhos estão corretos (actions vs _actions)
 import { getDayBookings } from "../actions/getDayBooking"
 import { createBooking } from "../actions/createBooking"
 import { useRouter } from "next/navigation"

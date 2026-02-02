@@ -8,33 +8,15 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "./lib/auth"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { getConfirmedBookings } from "./data/get-confirmed-bookings"
 
 export default async function Home() {
   // 1. Pega a sessão (Pode ser null se não tiver logado)
   const session = await getServerSession(authOptions)
   // 2. Busca barbearias (Isso todo mundo pode ver)
   const barberShops = await db.barberShop.findMany({})
-  // 3. Busca Agendamentos (Lógica Condicional / Conditional Fetching) 🧠
-  // Se tem sessão -> Busca no banco.
-  // Se não tem sessão -> Retorna array vazio [].
-  const bookings = session?.user
-    ? await db.booking.findMany({
-        where: {
-          userId: (session.user as any).id,
-          date: {
-            gte: new Date(),
-          },
-        },
-        include: {
-          service: {
-            include: { barberShop: true },
-          },
-        },
-        orderBy: {
-          date: "asc",
-        },
-      })
-    : []
+  // 3. Busca Agendamentos (Lógica Condicional / Conditional Fetching)
+  const bookings = await getConfirmedBookings()
 
   return (
     <>

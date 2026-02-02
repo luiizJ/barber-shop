@@ -3,13 +3,14 @@ import BarberShopServices from "@/app/components/BarberShopServices"
 import Sidebar from "@/app/components/Sidebar"
 import { Button } from "@/app/components/ui/button"
 import { Sheet, SheetTrigger } from "@/app/components/ui/sheet"
+import { getBarberShop } from "@/app/data/get-barbeshop"
 import { db } from "@/app/lib/prisma"
 import { ChevronLeft, MapPinIcon, MenuIcon, StarIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-interface BarberShopPageProps {
+export interface BarberShopPageProps {
   params: Promise<{
     slug: string
   }>
@@ -19,14 +20,7 @@ const BarberShopPage = async ({ params }: BarberShopPageProps) => {
   // 1. Aguardar os parâmetros carregarem
   const { slug } = await params
   // 2. Busca no banco
-  const barbershop = await db.barberShop.findUnique({
-    where: {
-      slug: slug,
-    },
-    include: {
-      services: true,
-    },
-  })
+  const barbershop = await getBarberShop({ slug })
   // 3. Se não achar, joga pro 404 oficial do Next, implementar nova badRequest depois..
   if (!barbershop) {
     return notFound()

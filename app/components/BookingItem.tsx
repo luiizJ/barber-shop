@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { Card, CardContent, CardTitle } from "./ui/card"
+import { Card, CardContent } from "./ui/card"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getBookingStatus } from "../utils/get-booking-status"

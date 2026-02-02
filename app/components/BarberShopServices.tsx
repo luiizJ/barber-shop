@@ -3,16 +3,6 @@ import Image from "next/image"
 import { Button } from "./ui/button"
 import { Card, CardContent } from "./ui/card"
 import Link from "next/link"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "./ui/sheet"
-import { Calendar } from "./ui/calendar"
-import { ptBR } from "date-fns/locale"
-import CalendarBr from "./Scheduling"
 import Scheduling from "./Scheduling"
 
 interface BarberShopServicesProps {

@@ -6,7 +6,6 @@ import { searchCategory } from "../constants/searchCategory"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
-
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form"

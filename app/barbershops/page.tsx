@@ -2,9 +2,9 @@ import { db } from "@/app/lib/prisma"
 import BarbershopItem from "@/app/components/BarbershopItem" // Card da Loja
 import BarberShopServices from "@/app/components/BarberShopServices" // Card do Serviço (Reutilizado!)
 import Header from "@/app/components/Header"
-import { redirect } from "next/navigation"
 import SearchbarberShops from "../components/SearchbarberShops"
 import type { BarberShop } from "@prisma/client"
+import { getSearchResults } from "../data/get-search-results"
 
 interface BarbershopsPageProps {
   searchParams: Promise<{
@@ -14,33 +14,18 @@ interface BarbershopsPageProps {
   barberShop?: BarberShop
 }
 
-const BarbershopsPage = async (
-  props: BarbershopsPageProps,
-  barberShop?: BarberShop,
-) => {
-  const searchParams = await props.searchParams
+const BarbershopsPage = async ({ searchParams }: BarbershopsPageProps) => {
+  const params = await searchParams
+  // Definimos o termo de busca (Pode vir do input 'search' OU do botão rápido 'service')
+  const searchTerm = params.search || params.service
 
-  if (!searchParams.search && !searchParams.service) {
+  if (!searchTerm) {
     // return redirect("/")
   }
 
-  const searchTerm = searchParams.search || searchParams.service
-
-  const [barbershops, services] = await Promise.all([
-    db.barberShop.findMany({
-      where: {
-        name: { contains: searchTerm, mode: "insensitive" },
-      },
-    }),
-    db.barberServices.findMany({
-      where: {
-        name: { contains: searchTerm, mode: "insensitive" },
-      },
-      include: {
-        barberShop: true,
-      },
-    }),
-  ])
+  const { barbershops, services } = await getSearchResults({
+    search: searchTerm || "",
+  })
 
   return (
     <>

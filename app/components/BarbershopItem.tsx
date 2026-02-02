@@ -42,7 +42,6 @@ const BarbershopItem = ({ barberShop }: BarberShopItemProps) => {
           </div>
         </CardContent>
       </Card>
-      {/*AREA DE EXEMPLO (LAYOUT) APAGAR DAQUI PARA BAIXO ANTES DE SUBIR PRA PROD*/}
       <Card className="min-w-[170px] rounded-2xl py-2">
         <CardContent className="p-0 px-2 pt-1">
           {/*Area da imagem*/}
@@ -51,8 +50,13 @@ const BarbershopItem = ({ barberShop }: BarberShopItemProps) => {
               src={barberShop.imageUrl}
               alt={barberShop.name}
               fill
-              className="rounded-xl object-cover"
+              className="rounded-2xl object-cover"
             />
+            <Badge className="absolute top-2 right-2" variant={"secondary"}>
+              <StarIcon size={12} className="fill-primary text-primary" />
+              {/* substituir por dados reais do banco de dados */}
+              <p className="text-xs font-semibold">5,0</p>
+            </Badge>
           </div>
           {/*Area da descriçao (corrigir comportamento do card a partir da descriçao)*/}
           <div className="py-3">
@@ -61,8 +65,8 @@ const BarbershopItem = ({ barberShop }: BarberShopItemProps) => {
             </h3>
             <p className="text-sm text-gray-400">{barberShop.address}</p>
             <p className="text-sm">{barberShop.description}</p>
-            <Button variant="secondary" className="mt-3 w-full">
-              Agendar
+            <Button variant="secondary" className="mt-3 w-full" asChild>
+              <Link href={`/barbershops/${barberShop.slug}`}>Agendar</Link>
             </Button>
           </div>
         </CardContent>

@@ -9,7 +9,10 @@ interface BookingBadgeProps {
 
 const BookingBadge = ({ variant, label, className }: BookingBadgeProps) => {
   return (
-    <Badge variant={variant} className={`w-fit ${className}`}>
+    <Badge
+      variant={variant}
+      className={`w-fit font-bold uppercase ${className}`}
+    >
       {label}
     </Badge>
   )

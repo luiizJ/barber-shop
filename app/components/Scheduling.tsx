@@ -1,6 +1,5 @@
 "use client"
 
-import { BarberServices } from "@prisma/client"
 import {
   Sheet,
   SheetContent,
@@ -20,6 +19,7 @@ import { toast } from "sonner"
 // 👇 Verifique se seus caminhos estão corretos (actions vs _actions)
 import { getDayBookings } from "../actions/getDayBooking"
 import { createBooking } from "../actions/createBooking"
+import { useRouter } from "next/navigation"
 
 interface SchedulingProps {
   service: {
@@ -34,6 +34,8 @@ interface SchedulingProps {
 
 const Scheduling = ({ service }: SchedulingProps) => {
   // 1. HOOKS E ESTADOS (A Memória do Componente)
+  const router = useRouter()
+
   const { data, status } = useSession() // Sessão do usuário (Logado ou não?)
 
   const [date, setDate] = useState<Date | undefined>(new Date()) // Data selecionada no calendário
@@ -144,7 +146,14 @@ const Scheduling = ({ service }: SchedulingProps) => {
       setSheetIsOpen(false)
       setHour(undefined)
       setDate(new Date())
-      toast.success("Reserva realizada com sucesso!")
+      toast.success("Reserva realizada com sucesso!", {
+        action: {
+          label: "Ver Agendamentos",
+          onClick: () => {
+            router.push("/bookings")
+          },
+        },
+      })
     } catch (error) {
       console.error(error)
       toast.error("Erro ao realizar reserva!")
@@ -176,7 +185,7 @@ const Scheduling = ({ service }: SchedulingProps) => {
             mode="single"
             selected={date}
             onSelect={handleSelectDate}
-            className="w-full rounded-md border"
+            className="flex w-full justify-center rounded-md border"
             locale={ptBR}
             fromDate={new Date()}
             styles={{
@@ -192,8 +201,8 @@ const Scheduling = ({ service }: SchedulingProps) => {
 
         {/* LISTA DE HORÁRIOS*/}
         {date && (
-          <div className="flex flex-col border-t border-solid px-5 py-6">
-            <h3 className="text-sm font-bold text-gray-400 uppercase">
+          <div className="flex flex-col border-t border-solid px-5 pt-6">
+            <h3 className="pb-5 text-sm font-bold text-gray-400 uppercase">
               Horários Disponíveis
             </h3>
             <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">

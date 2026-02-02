@@ -81,6 +81,12 @@ enum BookingStatus {
   PENDING
 }
 
+enum PaymentMethod {
+  PIX
+  CARD
+  CASH
+}
+
 // --- MODELS DO SAAS ---
 
 model BarberShop {
@@ -141,6 +147,7 @@ model Booking {
 
   date   DateTime
   status BookingStatus @default(CONFIRMED)
+  paymentMethod PaymentMethod @default(CASH)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

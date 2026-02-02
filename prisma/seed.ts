@@ -8,65 +8,55 @@ async function main() {
   // --------------------------------------------------------------------------
   // 1. LIMPEZA (CLEANUP)
   // --------------------------------------------------------------------------
-  // Apaga dados antigos. A ordem importa para não quebrar chaves estrangeiras.
   await prisma.booking.deleteMany()
-  await prisma.barberServices.deleteMany() // MUDANÇA: Nome da tabela agora é singular (BarberService)
+  await prisma.barberServices.deleteMany()
   await prisma.barberShop.deleteMany()
-  await prisma.account.deleteMany() // ADICIONADO: Limpa conexões do NextAuth
-  await prisma.session.deleteMany() // ADICIONADO: Limpa sessões
+  await prisma.account.deleteMany()
+  await prisma.session.deleteMany()
   await prisma.verificationToken.deleteMany()
-  await prisma.user.deleteMany() // Limpa usuários por último
+  await prisma.user.deleteMany()
 
   console.log("🧹 Banco de dados limpo!")
 
   // --------------------------------------------------------------------------
   // 2. CRIAR O DONO (BARBER_OWNER)
   // --------------------------------------------------------------------------
-  // Precisamos dele antes da barbearia para fazer o vínculo (ownerId)
   const donoUser = await prisma.user.create({
     data: {
       name: "Miguel Barbeiro",
       email: "miguel@barber.com",
-      role: "BARBER_OWNER", // Define permissão de acesso ao painel
-      phone: "(83) 99999-9999", // Telefone pessoal do dono
-      emailVerified: new Date(), // Marca como verificado para facilitar testes
+      role: "BARBER_OWNER",
+      phone: "(83) 99999-9999",
+      emailVerified: new Date(),
       image: "https://utfs.io/f/c97a296d-7847-4661-8e29-195f874c5d40-4c4f3.png",
     },
   })
 
   // --------------------------------------------------------------------------
-  // 3. CRIAR A BARBEARIA (VINCULADA AO DONO)
+  // 3. CRIAR A BARBEARIA PRINCIPAL (Vintage Barber)
   // --------------------------------------------------------------------------
   const vintageBarber = await prisma.barberShop.create({
     data: {
       name: "Vintage Barber",
       address: "Rua da Tecnologia, 777 - Cabedelo, PB",
-      phones: ["(83) 98888-8888", "(83) 97777-7777"], // MANTIDO: Array de strings
+      phones: ["(83) 98888-8888", "(83) 97777-7777"],
       description:
         "A melhor barbearia de Cabedelo. Estilo clássico, gestão moderna.",
       imageUrl:
         "https://utfs.io/f/5832df58-cfd7-4b3f-b102-42b7e150ced2-16r.png",
       slug: "vintage-barber",
-
-      // CONFIGURAÇÃO SAAS / STRIPE
-      stripeSubscriptionStatus: "active", // (Simulação)
+      stripeSubscriptionStatus: "active",
       subscriptionEndsAt: new Date(
         new Date().setFullYear(new Date().getFullYear() + 1),
-      ), // Válido por 1 ano
-
-      // VÍNCULO IMPORTANTE
+      ),
       ownerId: donoUser.id,
     },
   })
 
-  console.log(
-    `💈 Barbearia criada: ${vintageBarber.name} (Dono: ${donoUser.name})`,
-  )
+  console.log(`💈 Barbearia criada: ${vintageBarber.name}`)
 
-  // --------------------------------------------------------------------------
-  // 4. CRIAR SERVIÇOS
-  // --------------------------------------------------------------------------
-  const services = [
+  // Definição dos serviços (Reutilizável)
+  const servicesData = [
     {
       name: "Corte de Cabelo",
       description: "Estilo personalizado com as últimas tendências.",
@@ -82,7 +72,7 @@ async function main() {
         "https://utfs.io/f/e6bdffb6-24a9-455b-aba3-903c2c2b5bde-1jo6tu.png",
     },
     {
-      name: "Acabamento", // Corrigi o typo "Acabameto" que estava no original
+      name: "Acabamento",
       description: "Acabamento perfeito para um visual renovado.",
       price: 15.0,
       imageUrl:
@@ -90,8 +80,7 @@ async function main() {
     },
     {
       name: "Sobrancelha",
-      description:
-        "Ideal para quem deseja um visual moderno, atraente e preenchimento de falhas.",
+      description: "Ideal para quem deseja um visual moderno.",
       price: 15.0,
       imageUrl:
         "https://utfs.io/f/2118f76e-89e4-43e6-87c9-8f157500c333-b0ps0b.png",
@@ -105,38 +94,91 @@ async function main() {
     },
   ]
 
-  // Loop para criar os serviços (Usando barberService no singular)
-  for (const service of services) {
+  // Criar serviços da Vintage
+  for (const service of servicesData) {
     await prisma.barberServices.create({
-      // MUDANÇA: barberServices -> barberService
       data: {
         name: service.name,
         description: service.description,
         price: service.price,
         imageUrl: service.imageUrl,
-        barberShop: {
-          connect: {
-            id: vintageBarber.id,
-          },
-        },
+        barberShop: { connect: { id: vintageBarber.id } },
       },
     })
   }
 
   // --------------------------------------------------------------------------
-  // 5. CRIAR AGENDAMENTOS (PARA DASHBOARD)
+  // 3.1 POPULANDO COM MAIS BARBEARIAS (EXTRA)
+  // --------------------------------------------------------------------------
+  const extraShops = [
+    {
+      name: "Corte & Estilo",
+      slug: "corte-e-estilo",
+      address: "Av. Epitácio Pessoa, 500 - João Pessoa",
+      imageUrl:
+        "https://utfs.io/f/45331760-899c-4b4b-910e-e00babb6ed81-16q.png",
+      description: "Cortes modernos para quem tem atitude.",
+    },
+    {
+      name: "Machado's Barber",
+      slug: "machados-barber",
+      address: "Rua do Comércio, 88 - Intermares",
+      imageUrl:
+        "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=800&auto=format&fit=crop", // Reutilizando img genérica
+      description: "Tradição em navalha e toalha quente.",
+    },
+    {
+      name: "Barber King",
+      slug: "barber-king",
+      address: "Manaíra Shopping, Loja 42",
+      imageUrl:
+        "https://images.unsplash.com/photo-1532710093739-9470acff878f?q=80&w=800&auto=format&fit=crop",
+      description: "A barbearia premium da região.",
+    },
+  ]
+
+  for (const extra of extraShops) {
+    const shop = await prisma.barberShop.create({
+      data: {
+        name: extra.name,
+        address: extra.address,
+        phones: ["(83) 99999-0000"],
+        description: extra.description,
+        imageUrl: extra.imageUrl,
+        slug: extra.slug,
+        stripeSubscriptionStatus: "active",
+        ownerId: donoUser.id, // Mesmo dono para facilitar
+      },
+    })
+
+    // Adiciona os mesmos serviços para as novas lojas
+    for (const service of servicesData) {
+      await prisma.barberServices.create({
+        data: {
+          name: service.name,
+          description: service.description,
+          price: service.price,
+          imageUrl: service.imageUrl,
+          barberShopId: shop.id,
+        },
+      })
+    }
+    console.log(`💈 Barbearia Extra Criada: ${shop.name}`)
+  }
+
+  // --------------------------------------------------------------------------
+  // 5. CRIAR AGENDAMENTOS E USUÁRIO CLIENTE
   // --------------------------------------------------------------------------
   const clienteUser = await prisma.user.create({
     data: {
       name: "Cliente Teste",
       email: "cliente@gmail.com",
       role: "USER",
+      image: "https://github.com/shadcn.png",
     },
   })
 
-  // Busca o serviço de corte para usar nos agendamentos
   const servicoCorte = await prisma.barberServices.findFirst({
-    // MUDANÇA: barberService
     where: { barberShopId: vintageBarber.id },
   })
 
@@ -150,18 +192,20 @@ async function main() {
     const futuro = new Date()
     futuro.setDate(futuro.getDate() + 5)
 
-    // Agendamento Finalizado
+    // Agendamento Finalizado (Pago em Dinheiro)
     await prisma.booking.create({
       data: {
         userId: clienteUser.id,
         barberShopId: vintageBarber.id,
         serviceId: servicoCorte.id,
         date: ontem,
-        status: "COMPLETED",
+        status: "CONFIRMED",
+        price: Number(servicoCorte.price),
+        paymentMethod: "CASH", // Testando o novo campo
       },
     })
 
-    // Agendamento Confirmado
+    // Agendamento Confirmado (Pago no PIX)
     await prisma.booking.create({
       data: {
         userId: clienteUser.id,
@@ -169,6 +213,8 @@ async function main() {
         serviceId: servicoCorte.id,
         date: amanha,
         status: "CONFIRMED",
+        price: Number(servicoCorte.price),
+        paymentMethod: "PIX", // Testando o novo campo
       },
     })
 
@@ -180,15 +226,15 @@ async function main() {
         serviceId: servicoCorte.id,
         date: futuro,
         status: "CANCELLED",
+        price: Number(servicoCorte.price),
+        paymentMethod: "CARD",
       },
     })
 
-    console.log(
-      "📅 Agendamentos criados: 1 Concluído, 1 Confirmado, 1 Cancelado.",
-    )
+    console.log("📅 Agendamentos criados com sucesso.")
   }
 
-  console.log("✅ Seed finalizado com sucesso! O banco está pronto.")
+  console.log("✅ Seed finalizado! O banco está populado com 4 barbearias.")
 }
 
 main()

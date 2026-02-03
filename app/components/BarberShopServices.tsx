@@ -6,10 +6,27 @@ import Link from "next/link"
 import Scheduling from "./Scheduling"
 
 interface BarberShopServicesProps {
-  services: BarberServices & { barberShop?: BarberShop }
+  services: {
+    id: string
+    name: string
+    description: string
+    imageUrl: string
+    price: number
+    barberShopId: string
+    barberShop?: BarberShop
+  }
+  barberShop: {
+    id: string
+    name: string
+    slug: string
+    phones: string[]
+  }
 }
 
-const BarberShopServices = ({ services }: BarberShopServicesProps) => {
+const BarberShopServices = ({
+  services,
+  barberShop,
+}: BarberShopServicesProps) => {
   return (
     <Card>
       <CardContent className="flex items-center gap-4">
@@ -60,13 +77,19 @@ const BarberShopServices = ({ services }: BarberShopServicesProps) => {
             ) : (
               // CENÁRIO 2: MODO AGENDAMENTO (Abre o Modal/Sheet)
               <Scheduling
+                barberShop={{
+                  id: barberShop.id,
+                  name: barberShop.name,
+                  phones: barberShop.phones,
+                  slug: barberShop.slug,
+                }}
                 service={{
                   id: services.id,
                   barberShopId: services.barberShopId,
                   name: services.name,
                   description: services.description,
                   imageUrl: services.imageUrl,
-                  price: Number(services.price),
+                  price: services.price,
                 }}
               />
             )}

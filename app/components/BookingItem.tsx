@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client"
+import { Prisma, type PaymentMethod } from "@prisma/client"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Card, CardContent } from "./ui/card"
 import { format } from "date-fns"
@@ -20,6 +20,8 @@ import Image from "next/image"
 import BarberPhone from "./BarberPhone"
 import { Button } from "./ui/button"
 import BookingSummary from "./BookingSummary"
+import { Badge } from "./ui/badge"
+import { Banknote, CreditCard, Smartphone } from "lucide-react"
 
 // 1. TYPE
 // Usamos o "GetPayload" do Prisma para garantir que o TypeScript saiba
@@ -53,6 +55,34 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                 label={label}
                 className={className}
               />
+              <div className="mt-1">
+                <Badge
+                  variant="secondary"
+                  className="border-secondary w-fit gap-2 bg-transparent pl-0 text-gray-400 hover:bg-transparent"
+                >
+                  {/* Lógica do Ícone */}
+                  <div className="flex items-center p-1">
+                    {booking.paymentMethod === "PIX" && (
+                      <Smartphone size={14} className="text-purple-500" />
+                    )}
+                    {booking.paymentMethod === "CASH" && (
+                      <Banknote size={14} className="text-green-500" />
+                    )}
+                    {booking.paymentMethod === "CARD" && (
+                      <CreditCard size={14} className="text-blue-500" />
+                    )}
+                  </div>
+
+                  {/* Lógica do Texto */}
+                  <span className="text-xs font-normal">
+                    {booking.paymentMethod === "PIX"
+                      ? "Pix"
+                      : booking.paymentMethod === "CARD"
+                        ? "Cartão"
+                        : "No Local"}
+                  </span>
+                </Badge>
+              </div>
               <h3 className="font-semibold">{booking.service.name}</h3>
               <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
@@ -122,6 +152,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
         <div className="mt-5">
           <BookingBadge variant={variant} label={label} className={className} />
           <BookingSummary
+            paymentMethod={booking.paymentMethod}
             barbershop={booking.service.barberShop}
             service={booking.service}
             selectedDate={booking.date}

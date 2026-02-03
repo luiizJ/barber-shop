@@ -4,14 +4,17 @@ import { db } from "@/app/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/lib/auth"
 import { revalidatePath } from "next/cache"
+import type { PaymentMethod } from "@prisma/client"
 
 interface CreateBookingParams {
   serviceId: string
   date: Date
+  paymentMethod: PaymentMethod
 }
 export const createBooking = async ({
   serviceId,
   date,
+  paymentMethod,
 }: CreateBookingParams) => {
   // 1. SEGURANÇA DE IDENTIDADE 👮
   // Pegamos o usuário direto da sessão  do servidor.
@@ -43,6 +46,8 @@ export const createBooking = async ({
       barberShopId: service.barberShop.id, // ID vem do banco (relação)
       date: date,
       price: service.price, // Preço vem do banco
+      paymentMethod: paymentMethod, // Salva se foi PIX ou CASH
+      status: "CONFIRMED", // Garante que nasce confirmado
     },
   })
 

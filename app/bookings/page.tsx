@@ -33,9 +33,12 @@ const BookingsPage = async () => {
         </div>
 
         {/* SEÇÃO DE HISTÓRICO (AQUI ENTRA O CONCEITO DE HISTORY) */}
-        <h2 className="mt-6 text-xs font-bold text-gray-400 uppercase">
-          Finalizados
-        </h2>
+        {finishedBookings.length > 0 && (
+          <h2 className="mt-6 text-xs font-bold text-gray-400 uppercase">
+            Finalizados
+          </h2>
+        )}
+
         <div className="mt-3 flex flex-col gap-3">
           {finishedBookings.map((booking) => (
             <BookingItem key={booking.id} booking={booking} />

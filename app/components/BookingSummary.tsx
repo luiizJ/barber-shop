@@ -2,17 +2,20 @@ import { format } from "date-fns"
 import { Card, CardContent, CardTitle } from "./ui/card"
 import { ptBR } from "date-fns/locale"
 import type { BarberServices, BarberShop } from "@prisma/client"
+import { PaymentMethod } from "@prisma/client"
 
 interface BookingSummaryProps {
   service: Pick<BarberServices, "name" | "price">
   barbershop: Pick<BarberShop, "name">
   selectedDate: Date
+  paymentMethod: PaymentMethod
 }
 
 const BookingSummary = ({
   service,
   barbershop,
   selectedDate,
+  paymentMethod,
 }: BookingSummaryProps) => {
   return (
     <Card className="mt-3 mb-6 w-full">
@@ -42,6 +45,16 @@ const BookingSummary = ({
         <div className="flex items-center justify-between">
           <h4 className="font-bold text-gray-400">Local</h4>
           <p className="font-semibold">{barbershop?.name}</p>
+        </div>
+        <div className="flex items-center justify-between">
+          <h4 className="font-bold text-gray-400">Pagamento</h4>
+          <p className="font-semibold">
+            {paymentMethod === PaymentMethod.PIX
+              ? "Pix"
+              : paymentMethod === PaymentMethod.CARD
+                ? "Cartão"
+                : "Dinheiro"}
+          </p>
         </div>
       </CardContent>
     </Card>

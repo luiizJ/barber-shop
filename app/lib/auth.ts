@@ -11,15 +11,32 @@ export const authOptions: AuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       httpOptions: {
-        timeout: 10000, // Aumento de tempo limite para 10 segundos (padrão  3500ms)
+        timeout: 10000,
       },
     }),
   ],
+  // 1. MUDANÇA CRUCIAL: Forçar estratégia JWT
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
-    async session({ session, user }) {
-      session.user = { ...session.user, id: user.id } as any
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+        token.role = (user as any).role
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          role: token.role as any,
+        }
+      }
       return session
     },
   },
-  secret: process.env.NEXT_AUTH_SECRET, // É bom adicionar isso se ainda não tiver
+  secret: process.env.NEXTAUTH_SECRET,
 }

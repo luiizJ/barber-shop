@@ -15,7 +15,35 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "github.com",
       },
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+        port: "",
+        pathname: "/**",
+      },
     ],
+  },
+
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY", // evita Clickjacking
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff", // Impede o navegador de "adivinhar" tipos de arquivo (evita XSS)
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin", // Protege dados de referência
+          },
+        ],
+      },
+    ]
   },
 }
 

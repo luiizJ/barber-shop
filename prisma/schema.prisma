@@ -18,7 +18,7 @@ model User {
 
   // Custom fields
   phone String? // Para notificações de agendamento via Zap
-  role  UserRole @default(USER)
+  role  UserRole  @default(USER)
 
   // Relacionamentos
   accounts Account[]
@@ -87,6 +87,11 @@ enum PaymentMethod {
   CASH
 }
 
+enum BarberShopPlan {
+  START
+  PRO
+}
+
 // --- MODELS DO SAAS ---
 
 model BarberShop {
@@ -111,9 +116,25 @@ model BarberShop {
   stripePriceId            String? // Para saber se é plano Basic ou Pro
   subscriptionEndsAt       DateTime? // Data vital para controlar acesso
 
+  // 👇 PLANO ATUAL (Controla acesso aos gráficos)
+  plan BarberShopPlan @default(START)
+
   // Relacionamentos
-  services BarberServices[]
-  bookings Booking[]
+  services     BarberServices[]
+  bookings     Booking[]
+  openingHours BarberShopOpeningHours[] // 👈 Tabela de Horários
+}
+
+// TABELA PARA AGENDAMENTO REAL
+model BarberShopOpeningHours {
+  id String @id @default(uuid())
+
+  dayOfWeek Int    // 0 = Dom, 1 = Seg, 2 = Ter...
+  startTime String // "09:00"
+  endTime   String // "18:00"
+
+  barberShopId String
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
 }
 
 model BarberServices {
@@ -145,8 +166,8 @@ model Booking {
   service   BarberServices @relation(fields: [serviceId], references: [id])
   price     Decimal        @db.Decimal(10, 2)
 
-  date   DateTime
-  status BookingStatus @default(CONFIRMED)
+  date          DateTime
+  status        BookingStatus @default(CONFIRMED)
   paymentMethod PaymentMethod @default(CASH)
 
   createdAt DateTime @default(now())

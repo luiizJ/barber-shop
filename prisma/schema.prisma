@@ -18,7 +18,7 @@ model User {
 
   // Custom fields
   phone String? // Para notificações de agendamento via Zap
-  role  UserRole  @default(USER)
+  role  UserRole @default(USER)
 
   // Relacionamentos
   accounts Account[]
@@ -116,25 +116,50 @@ model BarberShop {
   stripePriceId            String? // Para saber se é plano Basic ou Pro
   subscriptionEndsAt       DateTime? // Data vital para controlar acesso
 
-  // 👇 PLANO ATUAL (Controla acesso aos gráficos)
+  // PLANO ATUAL
   plan BarberShopPlan @default(START)
+
+  //  CONTROLE DO PLANO START (Trava de edição de preços)
+  lastMenuUpdatedAt DateTime?
 
   // Relacionamentos
   services     BarberServices[]
   bookings     Booking[]
-  openingHours BarberShopOpeningHours[] // 👈 Tabela de Horários
+  openingHours BarberShopOpeningHours[]
+
+  //  EQUIPE (Multi-barbeiros)
+  barbers Barber[]
+}
+
+//  MODELO DA EQUIPE (BARBEIROS)
+model Barber {
+  id             String  @id @default(uuid())
+  name           String
+  imageUrl       String? // Foto do barbeiro
+  commissionRate Int     @default(0) // Porcentagem (0 a 100)
+  isActive       Boolean @default(true) // Se sair da barbearia, vira false
+
+  barberShopId String
+  // 👇 Adicionei a vírgula aqui
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // TABELA PARA AGENDAMENTO REAL
 model BarberShopOpeningHours {
   id String @id @default(uuid())
 
-  dayOfWeek Int    // 0 = Dom, 1 = Seg, 2 = Ter...
+  dayOfWeek Int // 0 = Dom, 1 = Seg, 2 = Ter...
   startTime String // "09:00"
   endTime   String // "18:00"
 
   barberShopId String
-  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
+  // 👇 Adicionei a vírgula aqui
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
 }
 
 model BarberServices {
@@ -145,7 +170,8 @@ model BarberServices {
   price       Decimal @db.Decimal(10, 2)
 
   barberShopId String
-  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
+  // 👇 Adicionei a vírgula aqui
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
 
   bookings Booking[]
 }
@@ -159,12 +185,16 @@ model Booking {
 
   // Barbearia
   barberShopId String
-  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
+  // 👇 Adicionei a vírgula aqui
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
 
   // Serviço
   serviceId String
   service   BarberServices @relation(fields: [serviceId], references: [id])
   price     Decimal        @db.Decimal(10, 2)
+
+  barberId String?
+  barber   Barber? @relation(fields: [barberId], references: [id])
 
   date          DateTime
   status        BookingStatus @default(CONFIRMED)

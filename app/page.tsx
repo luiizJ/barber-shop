@@ -2,13 +2,13 @@ import Header from "./components/Header"
 import BarbershopItem from "./components/BarbershopItem"
 import { db } from "./lib/prisma"
 import ExclusiveBanner from "./components/ExclusiveBanner"
-import SearchbarberShops from "./components/SearchbarberShops"
 import BookingItem from "./components/BookingItem"
 import { getServerSession } from "next-auth"
 import { authOptions } from "./lib/auth"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getConfirmedBookings } from "./data/get-confirmed-bookings"
+import SearchbarberShops from "./components/SearchBarberShops"
 
 export default async function Home() {
   // 1. Pega a sessão (Pode ser null se não tiver logado)

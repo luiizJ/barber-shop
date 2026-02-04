@@ -16,7 +16,7 @@ import { toast } from "sonner"
 import { Loader2, Scissors } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createBarbershop } from "@/app/actions/barber-actions"
-import { ImageUpload } from "@/app/components/image-upload"
+import { ImageUpload } from "@/app/components/ImageUpload"
 import { Textarea } from "@/app/components/ui/textarea"
 
 export function CreateShopDialog() {

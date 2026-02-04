@@ -2,7 +2,7 @@ import { db } from "@/app/lib/prisma"
 import BarbershopItem from "@/app/components/BarbershopItem" // Card da Loja
 import BarberShopServices from "@/app/components/BarberShopServices" // Card do Serviço (Reutilizado!)
 import Header from "@/app/components/Header"
-import SearchbarberShops from "../components/SearchbarberShops"
+import SearchbarberShops from "../components/SearchBarberShops"
 import type { BarberShop } from "@prisma/client"
 import { getSearchResults } from "../data/get-search-results"
 

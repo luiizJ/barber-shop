@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import { PlusCircle, Loader2, Edit } from "lucide-react"
 import { BarberServices } from "@prisma/client"
 import { upsertService } from "@/app/actions/barber-actions"
-import { ImageUpload } from "@/app/components/image-upload"
+import { ImageUpload } from "@/app/components/ImageUpload"
 
 interface ManageServiceDialogProps {
   service?: BarberServices

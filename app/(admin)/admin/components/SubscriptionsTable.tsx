@@ -1,4 +1,5 @@
 "use client"
+
 import {
   Table,
   TableBody,
@@ -8,11 +9,10 @@ import {
   TableRow,
 } from "@/app/components/ui/table"
 import { Badge } from "@/app/components/ui/badge"
-import { CheckCircle2, AlertCircle, Ban } from "lucide-react"
+import { CheckCircle2, Ban } from "lucide-react"
 import { ManageShopSheet } from "./ManageShopSheet"
 import { BarberShopPlan } from "@prisma/client"
 
-// Tipagem precisa vir do Prisma ou ser definida aqui
 interface Shop {
   id: string
   name: string
@@ -28,12 +28,23 @@ interface SubscriptionsTableProps {
 }
 
 export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
-  // Função auxiliar visual
-  function getDaysRemaining(date: Date | null) {
-    if (!date) return "N/A"
+  // Função auxiliar visual (CORRIGIDA)
+  function getDaysStatus(date: Date | null) {
+    if (!date) return { text: "Sem data", color: "text-muted-foreground" }
+
     const now = new Date()
     const diffTime = new Date(date).getTime() - now.getTime()
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    if (days < 0)
+      return {
+        text: `Venceu há ${Math.abs(days)} dias`,
+        color: "text-red-600 font-bold",
+      }
+    if (days === 0)
+      return { text: "Vence hoje!", color: "text-orange-600 font-bold" }
+
+    return { text: `${days} dias restantes`, color: "text-green-600" }
   }
 
   return (
@@ -58,7 +69,9 @@ export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
         </TableHeader>
         <TableBody>
           {shops.map((shop) => {
-            const daysLeft = getDaysRemaining(shop.subscriptionEndsAt)
+            // 👇 AQUI ESTAVA O ERRO: Agora usamos a função certa e pegamos o objeto retornado
+            const statusInfo = getDaysStatus(shop.subscriptionEndsAt)
+
             const isPro = shop.plan === "PRO"
             const status = shop.stripeSubscriptionStatus
 
@@ -99,10 +112,9 @@ export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
                       : "—"}
                   </div>
                   {shop.subscriptionEndsAt && (
-                    <span
-                      className={`text-xs ${Number(daysLeft) < 5 ? "font-bold text-red-500" : "text-muted-foreground"}`}
-                    >
-                      ({daysLeft} dias restantes)
+                    // 👇 AQUI: Usamos statusInfo.color e statusInfo.text direto
+                    <span className={`text-xs ${statusInfo.color}`}>
+                      ({statusInfo.text})
                     </span>
                   )}
                 </TableCell>

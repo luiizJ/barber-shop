@@ -2,18 +2,20 @@
 
 import { db } from "@/app/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { BarberShopPlan } from "@prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/lib/auth"
 import { z } from "zod"
 
-// --- SCHEMAS DE VALIDAÇÃO---
+// --- SCHEMAS DE VALIDAÇÃO ---
 
 const updateShopSchema = z.object({
   shopId: z.string().uuid(),
   plan: z.enum(["START", "PRO"]),
-  daysToAdd: z.coerce.number().min(0).max(3650),
-  status: z.string().transform((val) => val === "true"),
+  // 👇 1. MUDANÇA: Agora aceita números negativos (pra você remover dias)
+  daysToAdd: z.coerce.number().min(-3650).max(3650),
+
+  // Tratamento do booleano (já corrigido antes)
+  status: z.preprocess((val) => val === "true" || val === "on", z.boolean()),
 })
 
 const createShopSchema = z.object({
@@ -23,81 +25,86 @@ const createShopSchema = z.object({
 
 // --- FUNÇÕES ---
 
-// Função para Atualizar a Barbearia
 export async function updateBarbershop(formData: FormData) {
-  //  SEGURANÇA 1: Verificação de Identidade
   const session = await getServerSession(authOptions)
 
   if (!session || session.user.role !== "ADMIN") {
     throw new Error("Acesso Negado: Tentativa de invasão bloqueada.")
   }
 
-  //  SEGURANÇA 2: Validação e Limpeza dos Dados (Zod)
   const rawData = {
     shopId: formData.get("shopId"),
     plan: formData.get("plan"),
     daysToAdd: formData.get("daysToAdd"),
     status: formData.get("status"),
   }
-  // Se os dados forem inválidos, o Zod para tudo aqui.
+
   const data = updateShopSchema.parse(rawData)
 
-  // --- A partir daqui, usamos 'data' +  seguro ---
+  const shop = await db.barberShop.findUnique({
+    where: { id: data.shopId },
+    select: { subscriptionEndsAt: true, trialEndsAt: true },
+  })
 
-  let newEndDate = undefined
+  let updateData: any = {
+    plan: data.plan,
+    stripeSubscriptionStatus: data.status,
+  }
 
-  if (data.daysToAdd > 0) {
-    const currentEnd = await db.barberShop.findUnique({
-      where: { id: data.shopId },
-      select: { subscriptionEndsAt: true },
-    })
+  // 1. PRIMEIRO: Calculamos a nova data (se houver dias para adicionar/remover)
+  if (data.daysToAdd !== 0) {
+    const now = new Date()
+    const currentEnd = shop?.subscriptionEndsAt
 
-    const baseDate = currentEnd?.subscriptionEndsAt || new Date()
+    // Se já venceu, base é HOJE. Se tá ativo, base é a data atual do banco.
+    const baseDate = currentEnd && currentEnd > now ? currentEnd : now
+
     const resultDate = new Date(baseDate)
     resultDate.setDate(resultDate.getDate() + data.daysToAdd)
-    newEndDate = resultDate
+
+    updateData.subscriptionEndsAt = resultDate
+  }
+  // Se não mexeu nos dias, mas ativou sem data, dá 30 dias de cortesia
+  else if (data.daysToAdd === 0 && data.status === true) {
+    if (!shop?.subscriptionEndsAt || shop.subscriptionEndsAt < new Date()) {
+      const now = new Date()
+      now.setDate(now.getDate() + 30)
+      updateData.subscriptionEndsAt = now
+    }
+  }
+
+  // 2. DEPOIS: O Ban Hammer (Só aplica se NÃO tivermos definido uma data nova acima)
+  // Se o status é INATIVO e a gente NÃO tocou na data, aí sim matamos pra 1970.
+  // Se você adicionou dias, a data nova vai valer (o updateData.subscriptionEndsAt já existe),
+  // mas o 'stripeSubscriptionStatus: false' vai continuar bloqueando o acesso.
+  if (data.status === false && data.daysToAdd === 0) {
+    updateData.subscriptionEndsAt = new Date("1970-01-01")
+    updateData.trialEndsAt = new Date("1970-01-01")
   }
 
   await db.barberShop.update({
     where: { id: data.shopId },
-    data: {
-      plan: data.plan as BarberShopPlan,
-      stripeSubscriptionStatus: data.status,
-      ...(newEndDate && { subscriptionEndsAt: newEndDate }),
-    },
+    data: updateData,
   })
 
   revalidatePath("/admin")
 }
 
-// Função para Criar Barbearia Manualmente
+// ... createManualBarbershop continua igual ...
 export async function createManualBarbershop(formData: FormData) {
-  //  SEGURANÇA 1: Verificação de Identidade
   const session = await getServerSession(authOptions)
-
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || session.user.role !== "ADMIN")
     throw new Error("Acesso Negado.")
-  }
-
-  //  SEGURANÇA 2: Validação (Zod)
-  const rawData = {
-    name: formData.get("name"),
-    email: formData.get("email"),
-  }
-
+  const rawData = { name: formData.get("name"), email: formData.get("email") }
   const data = createShopSchema.parse(rawData)
 
-  // Gerar Slug
   const slug = data.name
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^\w-]+/g, "")
-
   const owner = await db.user.findUnique({ where: { email: data.email } })
 
-  if (!owner) {
-    throw new Error("Usuário não encontrado com este e-mail.")
-  }
+  if (!owner) throw new Error("Usuário não encontrado.")
 
   await db.barberShop.create({
     data: {
@@ -110,6 +117,9 @@ export async function createManualBarbershop(formData: FormData) {
       ownerId: owner.id,
       plan: "START",
       stripeSubscriptionStatus: true,
+      subscriptionEndsAt: new Date(
+        new Date().setDate(new Date().getDate() + 30),
+      ), // Já cria com 30 dias
     },
   })
 

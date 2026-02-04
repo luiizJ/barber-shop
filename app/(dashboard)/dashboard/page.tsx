@@ -24,9 +24,11 @@ import { CreateShopDialog } from "./components/CreateShopDialog"
 import { TrialWarning } from "./components/TrialWarning"
 
 export default async function BarberDashboard() {
+  // 1. BUSCA SESSÃO
   const session = await getServerSession(authOptions)
   if (!session?.user) return redirect("/")
 
+  // 2. BUSCA BARBEARIA (A variável nasce aqui)
   const barberShop = await db.barberShop.findFirst({
     where: { ownerId: session.user.id },
     include: {
@@ -40,30 +42,46 @@ export default async function BarberDashboard() {
     },
   })
 
-  // CASO 1: NÃO TEM LOJA (Redireciona ou mostra Dialog)
+  // 3. CASO 1: NÃO TEM LOJA (Verifica se é null aqui)
+  // Se for null, retorna o Dialog e para a execução.
   if (!barberShop) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
         <h1 className="text-2xl font-bold">Bem-vindo ao Sistema</h1>
         <p>Para começar, crie sua barbearia.</p>
-
         <CreateShopDialog />
       </div>
     )
   }
 
-  // CASO 2: BLOQUEADO PELO STRIPE (Pagamento falhou)
-  if (barberShop.stripeSubscriptionStatus === false) {
+  // --- 4. LÓGICA DE BLOQUEIO (Só roda se barberShop existir) ---
+
+  // Verifica Pagamento Stripe
+  const isStripeActive = barberShop.stripeSubscriptionStatus === true
+
+  // Verifica Data Manual (Admin)
+  const hasActiveDate = barberShop.subscriptionEndsAt
+    ? barberShop.subscriptionEndsAt > new Date()
+    : false
+
+  // Verifica Trial
+  const hasActiveTrial = barberShop.trialEndsAt
+    ? barberShop.trialEndsAt > new Date()
+    : false
+
+  // Se NENHUMA das 3 condições for verdadeira, bloqueia.
+  if (!isStripeActive && !hasActiveDate && !hasActiveTrial) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
         <h1 className="text-2xl font-bold text-red-500">Acesso Bloqueado</h1>
         <p>Sua assinatura está inativa. Regularize para continuar.</p>
         <Button asChild variant="destructive">
-          <Link href="/settings/billing">Regularizar Pagamento</Link>
+          <Link href="/dashboard/subscription">Regularizar Pagamento</Link>
         </Button>
       </div>
     )
   }
+  // -------------------------------------------------------------
 
   const isPro = barberShop.plan === "PRO"
 
@@ -88,14 +106,14 @@ export default async function BarberDashboard() {
         </Button>
       </div>
 
-      {/* 2. 🚨 ALERTA DE TRIAL (NOVIDADE) */}
+      {/* 2. ALERTA DE TRIAL */}
       <TrialWarning
         trialEndsAt={barberShop.trialEndsAt}
         stripeStatus={barberShop.stripeSubscriptionStatus}
         plan={barberShop.plan}
       />
 
-      {/* 3. BANNER DE UPGRADE (Aparece se for START e o Trial estiver ativo/acabando) */}
+      {/* 3. BANNER DE UPGRADE */}
       {!isPro && (
         <div className="flex items-center justify-between rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 p-6 text-white shadow-lg">
           <div>
@@ -120,7 +138,6 @@ export default async function BarberDashboard() {
 
       {/* 4. CARDS DE MÉTRICAS */}
       <div className="grid gap-4 md:grid-cols-3">
-        {/* ... (Mantenha seus cards iguais) ... */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
@@ -175,8 +192,7 @@ export default async function BarberDashboard() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-[1fr_300px]">
-        {/* ... (O resto da sua lista de agendamentos e sidebar continua igual) ... */}
-
+        {/* LISTA DE AGENDAMENTOS */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">Próximos Clientes</h2>
@@ -207,9 +223,9 @@ export default async function BarberDashboard() {
           )}
         </div>
 
+        {/* SIDEBAR DE AÇÕES */}
         <div className="space-y-4">
           <h2 className="text-xl font-bold">Ações Rápidas</h2>
-          {/* ... (Seus botões de ação) ... */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Gerenciar Loja</CardTitle>
@@ -230,7 +246,7 @@ export default async function BarberDashboard() {
                 asChild
               >
                 <Link href="/dashboard/settings">
-                  <Settings className="mr-2 h-4 w-4" /> Alterar Horários
+                  <Settings className="mr-2 h-4 w-4" /> Configurações
                 </Link>
               </Button>
             </CardContent>

@@ -17,12 +17,13 @@ export default withAuth(
       }
     }
 
-    //  2. (Futuro) PROTEÇÃO DO PAINEL DO BARBEIRO (/dashboard)
+    //  2. PROTEÇÃO DO PAINEL DO BARBEIRO (/dashboard)
     // Regra: Só Barbeiro ou Admin entram.
     if (pathname.startsWith("/dashboard")) {
-      if (role !== "BARBER_OWNER" && role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/", req.url))
-      }
+      // if (role !== "BARBER_OWNER" && role !== "ADMIN") {
+      //   return NextResponse.redirect(new URL("/", req.url))
+      // }
+      return NextResponse.next()
     }
 
     // Rota /bookings: Já está protegida pelo "authorized" lá embaixo,

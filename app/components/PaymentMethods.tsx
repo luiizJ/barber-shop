@@ -28,7 +28,7 @@ const PaymentMethods = ({ selected, onChange }: PaymentMethodsProps) => {
           value={PaymentMethod.PIX}
           className="border-secondary data-[state=on]:bg-primary/20 data-[state=on]:border-primary flex h-14 items-center gap-2 border"
         >
-          <Smartphone size={18} />
+          <Smartphone size={17} />
           <span>Pix</span>
         </ToggleGroupItem>
 
@@ -37,7 +37,7 @@ const PaymentMethods = ({ selected, onChange }: PaymentMethodsProps) => {
           value={PaymentMethod.CARD}
           className="border-secondary data-[state=on]:bg-primary/20 data-[state=on]:border-primary flex h-14 items-center gap-2 border"
         >
-          <CreditCard size={18} />
+          <CreditCard size={17} />
           <span>Credito</span>
         </ToggleGroupItem>
 
@@ -45,8 +45,8 @@ const PaymentMethods = ({ selected, onChange }: PaymentMethodsProps) => {
           value={PaymentMethod.CASH}
           className="border-secondary data-[state=on]:bg-primary/20 data-[state=on]:border-primary flex h-14 items-center gap-2 border"
         >
-          <Banknote size={18} />
-          <span>No Local</span>
+          <Banknote size={17} />
+          <span>Local</span>
         </ToggleGroupItem>
       </ToggleGroup>
     </div>

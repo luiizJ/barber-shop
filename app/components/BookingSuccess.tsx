@@ -39,14 +39,11 @@ const BookingSuccess = ({
 
   const isPix = paymentMethod === PaymentMethod.PIX
 
-  const handleGoToWhatsApp = () => {
-    const message = `Olá! Acabei de agendar um serviço de *${service.name}* na *${barberShop.name}* para o dia *${format(date, "dd/MM", { locale: ptBR })}* às *${hour}*. Escolhi pagar via *Pix*. Segue o comprovante!`
+  const handleFinalize = () => {
+    const message = `Olá! Acabei de agendar um serviço de *${service.name}* na *${barberShop.name}* para o dia *${format(date, "dd/MM", { locale: ptBR })}* às *${hour}*. Escolhi pagar via ${paymentMethod}. Segue o comprovante!`
     const phone = barberShop.phones[0].replace(/\D/g, "")
     const link = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`
     window.open(link, "_blank")
-  }
-
-  const handleGoToBookings = () => {
     router.push("/bookings")
     onClose()
   }
@@ -68,8 +65,8 @@ const BookingSuccess = ({
 
         <p className="max-w-[280px] text-center text-sm text-gray-400">
           {isPix
-            ? "Para confirmar sua reserva, envie o comprovante de pagamento no WhatsApp."
-            : "Sua reserva foi agendada com sucesso. Te esperamos lá!"}
+            ? "Para confirmar, envie o comprovante de pagamento no WhatsApp."
+            : "Sua reserva foi agendada com sucesso. Notifique o barbeiro e te esperamos lá!"}
         </p>
       </div>
 
@@ -92,30 +89,12 @@ const BookingSuccess = ({
 
       {/* BOTÕES DE AÇÃO */}
       <div className="mt-4 w-full space-y-3">
-        {isPix && (
-          <Button
-            onClick={handleGoToWhatsApp}
-            className="w-full"
-            variant="default"
-          >
-            <Smartphone className="mr-2 h-4 w-4" />
-            Enviar Comprovante
-          </Button>
-        )}
-
-        {/* Para quem não é Pix, o botão principal é ver agendamentos */}
-        {!isPix && (
-          <Button
-            onClick={handleGoToBookings}
-            className="w-full"
-            variant="default"
-          >
-            Ir para Meus Agendamentos
-          </Button>
-        )}
-
-        <Button onClick={onClose} variant="outline" className="w-full">
-          Fechar
+        <Button onClick={handleFinalize} className="w-full" variant="default">
+          <Smartphone className="mr-2 h-4 w-4" />
+          {isPix ? "Enviar Comprovante" : "Confirmar no WhatsApp"}
+        </Button>
+        <Button onClick={onClose} className="w-full" variant="default">
+          Ir para Meus Agendamentos
         </Button>
       </div>
     </div>

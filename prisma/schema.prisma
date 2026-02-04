@@ -112,7 +112,7 @@ model BarberShop {
   // --- ESTRUTURA SAAS / STRIPE ---
   stripeCustomerId         String?
   stripeSubscriptionId     String?
-  stripeSubscriptionStatus String? // (active, past_due, trialing...)
+  stripeSubscriptionStatus Boolean @default(true)// (active, past_due, trialing...)
   stripePriceId            String? // Para saber se é plano Basic ou Pro
   subscriptionEndsAt       DateTime? // Data vital para controlar acesso
 

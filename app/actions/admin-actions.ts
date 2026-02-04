@@ -13,7 +13,7 @@ const updateShopSchema = z.object({
   shopId: z.string().uuid(),
   plan: z.enum(["START", "PRO"]),
   daysToAdd: z.coerce.number().min(0).max(3650),
-  status: z.enum(["active", "inactive", "past_due"]), // Trava os status permitidos
+  status: z.boolean(),
 })
 
 const createShopSchema = z.object({
@@ -109,7 +109,7 @@ export async function createManualBarbershop(formData: FormData) {
       phones: ["(00) 00000-0000"],
       ownerId: owner.id,
       plan: "START",
-      stripeSubscriptionStatus: "active",
+      stripeSubscriptionStatus: true,
     },
   })
 

@@ -50,7 +50,7 @@ export default async function BarberDashboard() {
     )
   }
 
-  if (barberShop.stripeSubscriptionStatus === "inactive") {
+  if (barberShop.stripeSubscriptionStatus === false) {
     return (
       // ... (seu código de bloqueio mantém igual)
       <div>Bloqueado</div>

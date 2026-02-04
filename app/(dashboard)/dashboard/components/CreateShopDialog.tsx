@@ -17,6 +17,7 @@ import { Loader2, Scissors } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createBarbershop } from "@/app/actions/barber-actions"
 import { ImageUpload } from "@/app/components/image-upload"
+import { Textarea } from "@/app/components/ui/textarea"
 
 export function CreateShopDialog() {
   const [isOpen, setIsOpen] = useState(false)
@@ -30,7 +31,7 @@ export function CreateShopDialog() {
       await createBarbershop(formData)
       toast.success("Barbearia criada com sucesso! Bem-vindo ao time.")
       setIsOpen(false)
-      router.refresh() // Recarrega a página para sumir o aviso e aparecer o dashboard
+      router.refresh()
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar barbearia.")
     } finally {
@@ -71,6 +72,17 @@ export function CreateShopDialog() {
               name="name"
               placeholder="Ex: Dom Bigode"
               required
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Conte um pouco a sua barbearia e sua especialidade..."
+              required
+              className="resize-none"
             />
           </div>
 

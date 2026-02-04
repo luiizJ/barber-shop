@@ -22,8 +22,10 @@ const serviceSchema = z.object({
 const createShopSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 letras"),
   address: z.string().min(5, "Endereço muito curto"),
+  description: z
+    .string()
+    .min(10, "A descrição deve ter pelo menos 10 caracteres"),
   phone: z.string().min(10, "Telefone inválido"),
-  // ✅ ADICIONADO: Agora o schema aceita a imagem da loja
   imageUrl: z.string().optional().or(z.literal("")),
 })
 
@@ -190,6 +192,7 @@ export async function createBarbershop(formData: FormData) {
     name: formData.get("name"),
     address: formData.get("address"),
     phone: formData.get("phone"),
+    description: formData.get("description"),
     imageUrl: (formData.get("imageUrl") as string) || "",
   }
 
@@ -214,15 +217,20 @@ export async function createBarbershop(formData: FormData) {
       address: data.address,
       phones: [data.phone as string],
       slug: slug,
-      description: "Barbearia criada via Dashboard.",
+      description: data.description,
       imageUrl:
         data.imageUrl ||
         "https://utfs.io/f/c97a2adb-3065-448a-86a4-4320138d356c-16p.png",
       ownerId: session.user.id,
       plan: "START",
-      stripeSubscriptionStatus: "active",
+      stripeSubscriptionStatus: true,
     },
   })
+  if (shop.stripeSubscriptionStatus === false) {
+    throw new Error(
+      "Sua assinatura está inativa. Regularize para gerenciar serviços.",
+    )
+  }
 
   // 2. Promove Usuário para DONO
   if (session.user.role !== "BARBER_OWNER") {

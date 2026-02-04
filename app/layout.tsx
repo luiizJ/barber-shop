@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Reservyou",
+  title: "Agdlyflow",
   description: "Agende seu serviço com os melhores profissionais da região.",
 }
 

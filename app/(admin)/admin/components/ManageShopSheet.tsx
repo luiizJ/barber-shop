@@ -30,7 +30,7 @@ interface ManageShopSheetProps {
     name: string
     plan: BarberShopPlan
     subscriptionEndsAt: Date | null
-    stripeSubscriptionStatus: string | null
+    stripeSubscriptionStatus: boolean | null
   }
 }
 
@@ -69,7 +69,7 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
             {/* O name="status" aqui precisa bater com o admin-actions.ts */}
             <Select
               name="status"
-              defaultValue={shop.stripeSubscriptionStatus || "active"}
+              defaultValue={shop.stripeSubscriptionStatus ? "true" : "false"}
             >
               <SelectTrigger className="border-red-200 bg-white dark:bg-zinc-950">
                 <SelectValue placeholder="Selecione o status" />
@@ -77,7 +77,6 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
               <SelectContent>
                 <SelectItem value="active">✅ Ativo (Liberado)</SelectItem>
                 <SelectItem value="inactive">🚫 Inativo (Bloqueado)</SelectItem>
-                <SelectItem value="past_due">⚠️ Pagamento Pendente</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-[10px] font-medium text-red-500">

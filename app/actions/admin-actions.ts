@@ -13,7 +13,7 @@ const updateShopSchema = z.object({
   shopId: z.string().uuid(),
   plan: z.enum(["START", "PRO"]),
   daysToAdd: z.coerce.number().min(0).max(3650),
-  status: z.boolean(),
+  status: z.string().transform((val) => val === "true"),
 })
 
 const createShopSchema = z.object({

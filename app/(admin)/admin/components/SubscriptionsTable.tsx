@@ -18,7 +18,7 @@ interface Shop {
   name: string
   plan: BarberShopPlan
   subscriptionEndsAt: Date | null
-  stripeSubscriptionStatus: string | null
+  stripeSubscriptionStatus: boolean | null
   owner: { email: string | null } | null
   _count: { bookings: number }
 }
@@ -78,19 +78,14 @@ export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
                 </TableCell>
 
                 <TableCell>
-                  {status === "active" && (
+                  {status === true && (
                     <div className="flex items-center text-xs font-medium text-green-600">
                       <CheckCircle2 className="mr-1 h-3 w-3" /> Ativo
                     </div>
                   )}
-                  {status === "inactive" && (
+                  {status === false && (
                     <div className="flex items-center text-xs font-bold text-red-600">
                       <Ban className="mr-1 h-3 w-3" /> Bloqueado
-                    </div>
-                  )}
-                  {status !== "active" && status !== "inactive" && (
-                    <div className="flex items-center text-xs font-medium text-yellow-600">
-                      <AlertCircle className="mr-1 h-3 w-3" /> Pendente
                     </div>
                   )}
                 </TableCell>

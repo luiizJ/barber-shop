@@ -18,13 +18,13 @@ export async function getDashboardStats() {
   const totalShops = allBarbershops.length
 
   const activeSubs = allBarbershops.filter(
-    (shop) => shop.stripeSubscriptionStatus === "active",
+    (shop) => shop.stripeSubscriptionStatus === true,
   ).length
 
   const inactiveSubs = totalShops - activeSubs
 
   const mrr = allBarbershops.reduce((acc, shop) => {
-    if (shop.plan === "PRO" && shop.stripeSubscriptionStatus === "active") {
+    if (shop.plan === "PRO" && shop.stripeSubscriptionStatus === true) {
       return acc + 97.0
     }
     return acc

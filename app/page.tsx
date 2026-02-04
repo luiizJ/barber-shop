@@ -29,7 +29,6 @@ export default async function Home() {
             : "Bem Vindo"}{" "}
           !
         </h2>
-
         {/* Data Dinâmica  */}
         <p className="text-sm text-gray-400 capitalize">
           {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}

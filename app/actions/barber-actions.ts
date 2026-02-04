@@ -233,7 +233,7 @@ export async function createBarbershop(formData: FormData) {
   }
 
   // 2. Promove Usuário para DONO
-  if (session.user.role !== "BARBER_OWNER") {
+  if (session.user.role === "USER") {
     await db.user.update({
       where: { id: session.user.id },
       data: { role: "BARBER_OWNER" },

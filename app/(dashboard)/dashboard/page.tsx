@@ -3,7 +3,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/app/components/ui/card"
 import { db } from "@/app/lib/prisma"
 import {
@@ -22,6 +21,7 @@ import { Button } from "@/app/components/ui/button"
 import Link from "next/link"
 import { BookingItem } from "./components/BookingItem"
 import { CreateShopDialog } from "./components/CreateShopDialog"
+import { TrialWarning } from "./components/TrialWarning"
 
 export default async function BarberDashboard() {
   const session = await getServerSession(authOptions)
@@ -40,20 +40,28 @@ export default async function BarberDashboard() {
     },
   })
 
+  // CASO 1: NÃO TEM LOJA (Redireciona ou mostra Dialog)
   if (!barberShop) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
         <h1 className="text-2xl font-bold">Bem-vindo ao Sistema</h1>
         <p>Para começar, crie sua barbearia.</p>
+
         <CreateShopDialog />
       </div>
     )
   }
 
+  // CASO 2: BLOQUEADO PELO STRIPE (Pagamento falhou)
   if (barberShop.stripeSubscriptionStatus === false) {
     return (
-      // ... (seu código de bloqueio mantém igual)
-      <div>Bloqueado</div>
+      <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
+        <h1 className="text-2xl font-bold text-red-500">Acesso Bloqueado</h1>
+        <p>Sua assinatura está inativa. Regularize para continuar.</p>
+        <Button asChild variant="destructive">
+          <Link href="/settings/billing">Regularizar Pagamento</Link>
+        </Button>
+      </div>
     )
   }
 
@@ -80,7 +88,14 @@ export default async function BarberDashboard() {
         </Button>
       </div>
 
-      {/* 2. BANNER DE UPGRADE (Se for Free) */}
+      {/* 2. 🚨 ALERTA DE TRIAL (NOVIDADE) */}
+      <TrialWarning
+        trialEndsAt={barberShop.trialEndsAt}
+        stripeStatus={barberShop.stripeSubscriptionStatus}
+        plan={barberShop.plan}
+      />
+
+      {/* 3. BANNER DE UPGRADE (Aparece se for START e o Trial estiver ativo/acabando) */}
       {!isPro && (
         <div className="flex items-center justify-between rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 p-6 text-white shadow-lg">
           <div>
@@ -103,8 +118,9 @@ export default async function BarberDashboard() {
         </div>
       )}
 
-      {/* 3. CARDS DE MÉTRICAS (Estilizados) */}
+      {/* 4. CARDS DE MÉTRICAS */}
       <div className="grid gap-4 md:grid-cols-3">
+        {/* ... (Mantenha seus cards iguais) ... */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
@@ -129,7 +145,6 @@ export default async function BarberDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {/* Soma simples dos agendamentos futuros */}
               {Intl.NumberFormat("pt-BR", {
                 style: "currency",
                 currency: "BRL",
@@ -153,14 +168,15 @@ export default async function BarberDashboard() {
           <CardContent>
             <div className="text-3xl font-bold">{barberShop.plan}</div>
             <p className="text-muted-foreground mt-1 text-xs">
-              {isPro ? "Assinatura Ativa" : "Limite de 5 serviços"}
+              {isPro ? "Assinatura Ativa" : "Plano Gratuito / Trial"}
             </p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-8 md:grid-cols-[1fr_300px]">
-        {/* 4. LISTA DE AGENDAMENTOS */}
+        {/* ... (O resto da sua lista de agendamentos e sidebar continua igual) ... */}
+
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">Próximos Clientes</h2>
@@ -191,10 +207,9 @@ export default async function BarberDashboard() {
           )}
         </div>
 
-        {/* 5. ATALHOS RÁPIDOS (SIDEBAR DIREITA) */}
         <div className="space-y-4">
           <h2 className="text-xl font-bold">Ações Rápidas</h2>
-
+          {/* ... (Seus botões de ação) ... */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Gerenciar Loja</CardTitle>
@@ -217,20 +232,6 @@ export default async function BarberDashboard() {
                 <Link href="/dashboard/settings">
                   <Settings className="mr-2 h-4 w-4" /> Alterar Horários
                 </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-primary/5 border-primary/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-primary text-sm">Suporte</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-3 text-xs">
-                Precisa de ajuda com a plataforma?
-              </p>
-              <Button size="sm" className="w-full">
-                Chamar no WhatsApp
               </Button>
             </CardContent>
           </Card>

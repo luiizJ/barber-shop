@@ -6,7 +6,8 @@ import { authOptions } from "@/app/lib/auth"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getPlanLimits } from "@/app/lib/plan-limits"
-import { isSameMonth } from "date-fns"
+import { addDays, isSameMonth } from "date-fns"
+import { redirect } from "next/navigation"
 
 // --- 1. SCHEMAS DE VALIDAÇÃO (ZOD) ---
 
@@ -15,17 +16,6 @@ const serviceSchema = z.object({
   name: z.string().min(2, "O nome deve ter pelo menos 2 letras").max(50),
   description: z.string().max(200, "Descrição muito longa").optional(),
   price: z.coerce.number().min(0, "O preço não pode ser negativo"),
-  imageUrl: z.string().optional().or(z.literal("")),
-})
-
-// Schema para criar a loja (CORRIGIDO 👇)
-const createShopSchema = z.object({
-  name: z.string().min(3, "Nome deve ter no mínimo 3 letras"),
-  address: z.string().min(5, "Endereço muito curto"),
-  description: z
-    .string()
-    .min(10, "A descrição deve ter pelo menos 10 caracteres"),
-  phone: z.string().min(10, "Telefone inválido"),
   imageUrl: z.string().optional().or(z.literal("")),
 })
 
@@ -145,44 +135,6 @@ export async function deleteService(serviceId: string) {
   revalidatePath("/dashboard/services")
 }
 
-// LISTA DE SERVIÇOS PADRÃO (O "Seed" automático)
-const DEFAULT_SERVICES = [
-  {
-    name: "Corte de Cabelo",
-    description: "Estilo personalizado. Inclui lavagem e finalização.",
-    price: 35.0,
-    imageUrl:
-      "https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png",
-  },
-  {
-    name: "Barba Completa",
-    description: "Modelagem com navalha, toalha quente e balm hidratante.",
-    price: 25.0,
-    imageUrl:
-      "https://images.unsplash.com/photo-1532710093739-9470acff878f?q=80&w=800&auto=format&fit=crop",
-  },
-  {
-    name: "Pezinho / Acabamento",
-    description: "Manutenção dos contornos e limpeza do pescoço.",
-    price: 15.0,
-    imageUrl:
-      "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
-  },
-  {
-    name: "Corte + Barba",
-    description: "Combo completo para renovar o visual.",
-    price: 55.0,
-    imageUrl:
-      "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1000&auto=format&fit=crop",
-  },
-  {
-    name: "Sobrancelha",
-    description: "Limpeza e alinhamento com navalha ou pinça.",
-    price: 10.0,
-    imageUrl: "https://utfs.io/f/21de4d1f-a6dd-446f-8a8e-b8d21b062545-16u.png",
-  },
-]
-
 // --- 4. AÇÃO DE CRIAR BARBEARIA (ONBOARDING) ---
 export async function createBarbershop(formData: FormData) {
   const session = await getServerSession(authOptions)
@@ -195,6 +147,16 @@ export async function createBarbershop(formData: FormData) {
     description: formData.get("description"),
     imageUrl: (formData.get("imageUrl") as string) || "",
   }
+
+  const createShopSchema = z.object({
+    name: z.string().min(3, "Nome deve ter no mínimo 3 letras"),
+    address: z.string().min(5, "Endereço muito curto"),
+    description: z
+      .string()
+      .min(10, "A descrição deve ter pelo menos 10 caracteres"),
+    phone: z.string().min(10, "Telefone inválido"),
+    imageUrl: z.string().optional().or(z.literal("")),
+  })
 
   // Valida os dados (agora inclui imageUrl)
   const data = createShopSchema.parse(rawData)
@@ -220,17 +182,13 @@ export async function createBarbershop(formData: FormData) {
       description: data.description,
       imageUrl:
         data.imageUrl ||
-        "https://utfs.io/f/c97a2adb-3065-448a-86a4-4320138d356c-16p.png",
+        "https://utfs.io/f/5832df58-cfd7-4b3f-b102-42b7e150ced2-16r.png",
       ownerId: session.user.id,
       plan: "START",
       stripeSubscriptionStatus: true,
+      trialEndsAt: addDays(new Date(), 15),
     },
   })
-  if (shop.stripeSubscriptionStatus === false) {
-    throw new Error(
-      "Sua assinatura está inativa. Regularize para gerenciar serviços.",
-    )
-  }
 
   // 2. Promove Usuário para DONO
   if (session.user.role === "USER") {
@@ -249,8 +207,30 @@ export async function createBarbershop(formData: FormData) {
       imageUrl: session.user.image,
     },
   })
-
-  // 4. ✨ MÁGICA NOVA: CRIA OS SERVIÇOS PADRÃO
+  const DEFAULT_SERVICES = [
+    {
+      name: "Corte de Cabelo",
+      description: "Estilo personalizado.",
+      price: 35.0,
+      imageUrl:
+        "https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png",
+    },
+    {
+      name: "Barba Completa",
+      description: "Modelagem com navalha.",
+      price: 25.0,
+      imageUrl:
+        "https://images.unsplash.com/photo-1532710093739-9470acff878f?q=80&w=800&auto=format&fit=crop",
+    },
+    {
+      name: "Pezinho / Acabamento",
+      description: "Limpeza do pescoço.",
+      price: 15.0,
+      imageUrl:
+        "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
+    },
+  ]
+  // 4. CRIA OS SERVIÇOS PADRÃO
   await db.barberServices.createMany({
     data: DEFAULT_SERVICES.map((service) => ({
       name: service.name,
@@ -262,4 +242,49 @@ export async function createBarbershop(formData: FormData) {
   })
 
   revalidatePath("/dashboard")
+  redirect("/dashboard")
+}
+// --- 5. AÇÃO DE ATUALIZAR CONFIGURAÇÕES DA LOJA (USADA NA PÁGINA SETTINGS) ---
+export async function updateShopSettings(formData: FormData) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) throw new Error("Não autorizado.")
+
+  // 1. Pega os dados do formulário
+  const rawData = {
+    id: formData.get("shopId") as string,
+    name: formData.get("name") as string,
+    address: formData.get("address") as string,
+    description: formData.get("description") as string,
+    imageUrl: formData.get("imageUrl") as string,
+    phones: [formData.get("phone") as string], // Transforma em Array para o Prisma
+  }
+
+  // 2. SEGURANÇA: Garante que o usuário é o DONO da loja que está tentando editar
+  const shop = await db.barberShop.findUnique({
+    where: { id: rawData.id },
+  })
+
+  if (!shop) throw new Error("Barbearia não encontrada.")
+
+  // Apenas o Dono (OwnerId) ou o Admin (Você) podem editar os dados visuais
+  if (shop.ownerId !== session.user.id && session.user.role !== "ADMIN") {
+    throw new Error("Você não tem permissão para editar esta barbearia.")
+  }
+
+  // 3. Atualiza no Banco de Dados
+  await db.barberShop.update({
+    where: { id: rawData.id },
+    data: {
+      name: rawData.name,
+      address: rawData.address,
+      description: rawData.description,
+      imageUrl: rawData.imageUrl,
+      phones: rawData.phones,
+    },
+  })
+
+  // 4. Atualiza os caches para o usuário ver a mudança na hora
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/settings")
+  revalidatePath(`/barbershops/${shop.slug}`) // Atualiza a página pública também
 }

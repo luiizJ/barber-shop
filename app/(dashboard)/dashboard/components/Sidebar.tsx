@@ -12,7 +12,7 @@ import {
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 
 interface SidebarProps {
   shopName: string

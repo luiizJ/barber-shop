@@ -132,3 +132,23 @@ export async function createManualBarbershop(formData: FormData) {
 
   revalidatePath("/admin")
 }
+
+export async function deleteBarbershop(formData: FormData) {
+  const session = await getServerSession(authOptions)
+
+  if (!session || session.user.role !== "ADMIN") {
+    throw new Error("Acesso Negado.")
+  }
+
+  const shopId = formData.get("shopId") as string
+
+  if (!shopId) throw new Error("ID da loja não fornecido.")
+
+  // Deleta a barbearia
+  // isso já apaga agendamentos e serviços automaticamente caso schema.prisma tiver "onDelete: Cascade" nas relações.
+  await db.barberShop.delete({
+    where: { id: shopId },
+  })
+
+  revalidatePath("/admin")
+}

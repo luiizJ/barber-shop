@@ -19,10 +19,23 @@ import {
   SelectValue,
 } from "@/app/components/ui/select"
 import { BarberShopPlan } from "@prisma/client"
-import { updateBarbershop } from "@/app/actions/admin-actions"
+import { updateBarbershop, deleteBarbershop } from "@/app/actions/admin-actions" // 👈 Importe a nova action
 import { useState } from "react"
 import { Badge } from "@/app/components/ui/badge"
 import { toast } from "sonner"
+import { Trash2 } from "lucide-react" // 👈 Ícone de lixo
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/app/components/ui/alert-dialog"
 
 interface ManageShopSheetProps {
   shop: {
@@ -47,7 +60,19 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
     }
   }
 
-  // Define o valor padrão do status com base no banco
+  // Função para deletar
+  const handleDelete = async () => {
+    try {
+      const formData = new FormData()
+      formData.append("shopId", shop.id)
+      await deleteBarbershop(formData)
+      setIsOpen(false) // Fecha o Sheet
+      toast.success("Barbearia deletada com sucesso!")
+    } catch (error) {
+      toast.error("Erro ao deletar barbearia.")
+    }
+  }
+
   const defaultStatus = shop.stripeSubscriptionStatus ? "true" : "false"
 
   return (
@@ -57,16 +82,19 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
           Gerenciar
         </Badge>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="overflow-y-auto">
+        {" "}
+        {/* Scroll se precisar */}
         <SheetHeader>
           <SheetTitle>Gerenciar: {shop.name}</SheetTitle>
-          <SheetDescription>Alterações manuais de assinatura.</SheetDescription>
+          <SheetDescription>
+            Faça alterações manuais na assinatura e status.
+          </SheetDescription>
         </SheetHeader>
-
         <form action={handleSave} className="grid gap-4 py-4">
           <input type="hidden" name="shopId" value={shop.id} />
 
-          {/* STATUS: Agora envia "true" ou "false" explicitamente */}
+          {/* ... (Seus campos de Status, Plano e Dias continuam IGUAIS aqui) ... */}
           <div
             className={`grid gap-2 rounded-md border p-3 ${shop.stripeSubscriptionStatus ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}
           >
@@ -121,10 +149,44 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
             </p>
           </div>
 
-          <Button type="submit" className="mt-4 w-full">
+          <Button type="submit" className="mt-2 w-full">
             Salvar Alterações
           </Button>
         </form>
+        {/* 👇 ZONA DE PERIGO (DELETE) */}
+        <div className="mt-8 border-t pt-6">
+          <h3 className="mb-2 text-sm font-bold text-red-600">
+            Zona de Perigo
+          </h3>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full gap-2">
+                <Trash2 size={16} /> Excluir Barbearia
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Essa ação não pode ser desfeita. Isso excluirá permanentemente
+                  a barbearia
+                  <strong> {shop.name}</strong> e todos os seus agendamentos,
+                  serviços e dados.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Sim, Excluir Definitivamente
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </SheetContent>
     </Sheet>
   )

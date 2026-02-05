@@ -10,21 +10,25 @@ interface BuyButtonProps {
   text: string
   variant?: "default" | "outline" | "secondary" | "destructive"
   isCurrent?: boolean
+  disabled?: boolean // 👈 Recebemos o bloqueio aqui
 }
 
+// O botão interno que sabe se o form está enviando
 function SubmitButton({
   text,
   variant,
   isCurrent,
+  disabled, // 👈 Recebemos aqui também
 }: Omit<BuyButtonProps, "plan">) {
   const { pending } = useFormStatus()
 
+  // Se for o plano atual, mostramos o botão verde fixo
   if (isCurrent) {
     return (
       <Button
         disabled
         variant="outline"
-        className="w-full border-green-500 bg-green-50 text-green-600"
+        className="w-full border-green-500 bg-green-50 text-green-600 opacity-100"
       >
         Plano Atual
       </Button>
@@ -36,7 +40,8 @@ function SubmitButton({
       type="submit"
       variant={variant || "default"}
       className="w-full font-bold"
-      disabled={pending}
+      // 👇 O botão fica desativado se estiver carregando (pending) OU se a gente mandou bloquear (disabled)
+      disabled={pending || disabled}
     >
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
       {text}
@@ -44,13 +49,24 @@ function SubmitButton({
   )
 }
 
-export function BuyButton({ plan, text, variant, isCurrent }: BuyButtonProps) {
-  // Bind cria uma nova função com o argumento 'plan' já preenchido
+export function BuyButton({
+  plan,
+  text,
+  variant,
+  isCurrent,
+  disabled,
+}: BuyButtonProps) {
+  // Prepara a Server Action com o argumento do plano
   const bindedAction = createCheckoutSession.bind(null, plan)
 
   return (
     <form action={bindedAction} className="w-full">
-      <SubmitButton text={text} variant={variant} isCurrent={isCurrent} />
+      <SubmitButton
+        text={text}
+        variant={variant}
+        isCurrent={isCurrent}
+        disabled={disabled} // 👈 Passamos a trava para o botão de submit
+      />
     </form>
   )
 }

@@ -120,7 +120,7 @@ export default async function SubscriptionPage() {
       <div className="grid gap-8 md:grid-cols-2 lg:max-w-4xl">
         {/* PLANO START */}
         <Card
-          className={`flex flex-col ${!isPro ? "border-primary shadow-md" : ""}`}
+          className={`flex flex-col ${!isPro ? "border-primary shadow-md" : "opacity-75"}`} // Deixa opaco se não for o plano foco
         >
           <CardHeader>
             <CardTitle className="text-xl">Plano Start</CardTitle>
@@ -153,9 +153,17 @@ export default async function SubscriptionPage() {
           <CardFooter>
             <BuyButton
               plan="START"
-              text={buttonText}
               variant={!isPro ? "secondary" : "outline"}
-              isCurrent={!isPro && !isExpired} // Se ele é Start e não tá expirado, é o plano atual
+              isCurrent={!isPro && !isExpired}
+              // Se ele é PRO, desabilita o botão do Start
+              disabled={isPro}
+              text={
+                !isPro && !isExpired
+                  ? "Plano Atual"
+                  : isPro
+                    ? "Plano Inferior"
+                    : "Assinar Start"
+              }
             />
           </CardFooter>
         </Card>
@@ -201,15 +209,17 @@ export default async function SubscriptionPage() {
           <CardFooter>
             <BuyButton
               plan="PRO"
-              text={
-                isPro && isActive
-                  ? "Plano Atual" // Se já é PRO e pagou
-                  : isPro && isExpired
-                    ? "Renovar Pro" // Se era PRO mas venceu
-                    : "Fazer Upgrade" // Se é START ou Trial
-              }
               variant="default"
               isCurrent={isPro && isActive}
+              // Desabilita se já for PRO e estiver Ativo (não deixa pagar de novo a toa)
+              disabled={isPro && isActive}
+              text={
+                isPro && isActive
+                  ? "Plano Atual"
+                  : isPro && isExpired
+                    ? "Renovar Pro"
+                    : "Fazer Upgrade"
+              }
             />
           </CardFooter>
         </Card>

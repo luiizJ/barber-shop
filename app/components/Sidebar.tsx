@@ -1,6 +1,13 @@
 "use client"
 import { signIn, signOut, useSession } from "next-auth/react"
-import { CalendarIcon, HomeIcon, LogInIcon, LogOutIcon } from "lucide-react"
+import {
+  CalendarIcon,
+  HomeIcon,
+  LogInIcon,
+  LogOutIcon,
+  LayoutDashboard,
+  Scissors,
+} from "lucide-react"
 import { Button } from "./ui/button"
 import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
 import { Avatar, AvatarImage } from "./ui/avatar"
@@ -16,14 +23,24 @@ import {
   DialogTrigger,
 } from "./ui/dialog"
 
-const Sidebar = () => {
+// 👇 1. Definimos o Tipo
+interface SidebarProps {
+  hasBarbershop?: boolean
+}
+
+// 👇 2. Recebemos a Prop
+const Sidebar = ({ hasBarbershop }: SidebarProps) => {
   const { data: session } = useSession()
+
   const handleLoginWithGoogle = async () => {
     await signIn("google")
   }
   const handleLogoutClick = () => {
     signOut()
   }
+
+  // Lógica Visual: É dono se estiver logado E o banco disse que sim
+  const isOwner = session?.user && hasBarbershop
 
   return (
     <SheetContent className="overflow-y-auto p-3 [&::-webkit-scrollbar]:hidden">
@@ -49,7 +66,7 @@ const Sidebar = () => {
           </div>
         ) : (
           <>
-            <h2 className="text-lg font-bold">Faça Seu Login</h2>
+            <h2 className="text-lg font-bold">Faça seu login</h2>
             <Dialog>
               <DialogTrigger asChild>
                 <Button size={"icon"}>
@@ -58,9 +75,9 @@ const Sidebar = () => {
               </DialogTrigger>
               <DialogContent className="w-[70%]">
                 <DialogHeader>
-                  <DialogTitle>Faça Seu Login</DialogTitle>
+                  <DialogTitle>Faça seu login</DialogTitle>
                   <DialogDescription>
-                    Conecte-se Usando Sua Conta Google
+                    Conecte-se usando sua conta Google
                   </DialogDescription>
                 </DialogHeader>
                 <Button
@@ -81,40 +98,58 @@ const Sidebar = () => {
         )}
       </div>
 
-      <div className="flex flex-col gap-2 border-b border-solid">
+      <div className="flex flex-col gap-2 border-b border-solid py-5">
         <SheetClose asChild>
           <Button className="justify-start gap-2" variant={"ghost"} asChild>
             <Link href="/">
               <HomeIcon size={18} />
-              Inicio
+              Início
             </Link>
           </Button>
         </SheetClose>
-        <Button className="mb-4 justify-start gap-2" variant={"ghost"} asChild>
-          <Link href={`${session?.user ? "/bookings" : ""}`}>
-            <CalendarIcon size={18} />
-            Agendamentos
-          </Link>
-        </Button>
-      </div>
 
-      <div className="flex flex-col gap-2">
-        {searchCategory.map((services) => (
-          <SheetClose key={services.id} asChild>
+        {session?.user && (
+          <SheetClose asChild>
             <Button className="justify-start gap-2" variant={"ghost"} asChild>
-              <Link href={`/barbershops?search=${services.title}`}>
-                <Image
-                  src={services.imageUrl}
-                  alt={services.title}
-                  width={18}
-                  height={18}
-                />
-                {services.title}
+              <Link href="/bookings">
+                <CalendarIcon size={18} />
+                Agendamentos
               </Link>
             </Button>
           </SheetClose>
-        ))}
+        )}
+
+        {/* 👇 LÓGICA DO BOTÃO SAAS */}
+        <SheetClose asChild>
+          <Button className="justify-start gap-2" variant={"ghost"} asChild>
+            <Link href={isOwner ? "/dashboard" : "/pricing"}>
+              {isOwner ? <LayoutDashboard size={18} /> : <Scissors size={18} />}
+              {isOwner ? "Minha Barbearia" : "Anuncie sua barbearia"}
+            </Link>
+          </Button>
+        </SheetClose>
+        {/* ----------------------- */}
       </div>
+
+      {session?.user && (
+        <div className="flex flex-col gap-2 py-5">
+          {searchCategory.map((services) => (
+            <SheetClose key={services.id} asChild>
+              <Button className="justify-start gap-2" variant={"ghost"} asChild>
+                <Link href={`/barbershops?search=${services.title}`}>
+                  <Image
+                    src={services.imageUrl}
+                    alt={services.title}
+                    width={18}
+                    height={18}
+                  />
+                  {services.title}
+                </Link>
+              </Button>
+            </SheetClose>
+          ))}
+        </div>
+      )}
 
       {session?.user && (
         <div className="flex flex-col gap-2 border-t border-solid p-5">

@@ -8,12 +8,12 @@ interface SubscribeButtonProps {
   userId?: string
 }
 
-export function SubscribeButton({ userId }: SubscribeButtonProps) {
+const SubscribeButton = ({ userId }: SubscribeButtonProps) => {
   if (userId) {
     return (
       <Link href="/dashboard" className="w-full">
         <Button className="w-full font-bold" size="lg" variant="secondary">
-          Começar Teste Grátis 🚀
+          Acessar meu Painel 🚀
         </Button>
       </Link>
     )
@@ -23,10 +23,13 @@ export function SubscribeButton({ userId }: SubscribeButtonProps) {
     <Button
       className="w-full font-bold"
       size="lg"
-      variant="secondary"
+      // 👇 AQUI ESTÁ A MÁGICA:
+      // Chama o Google direto e manda voltar pro Dashboard
       onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
     >
-      Começar Teste Grátis 🚀
+      Começar Grátis
     </Button>
   )
 }
+
+export default SubscribeButton

@@ -11,12 +11,11 @@ import {
   CardTitle,
 } from "@/app/components/ui/card"
 import { Badge } from "@/app/components/ui/badge"
-import { Check, AlertTriangle, Calendar, CreditCard } from "lucide-react"
+import { Check, CreditCard, ArrowLeft } from "lucide-react"
 import { differenceInDays, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Link from "next/link"
 import { Button } from "@/app/components/ui/button"
-import { ArrowLeft } from "lucide-react"
 import { BuyButton } from "./components/BuyButton"
 
 export default async function SubscriptionPage() {
@@ -29,19 +28,31 @@ export default async function SubscriptionPage() {
 
   if (!shop) return redirect("/dashboard")
 
-  // --- LÓGICA DE DATAS E STATUS ---
-  const isPro = shop.plan === "PRO"
-  const isTrial = !!shop.trialEndsAt && shop.trialEndsAt > new Date()
-  const isExpired = !shop.stripeSubscriptionStatus && !isTrial // Não pagou e não é trial
+  // --- 👇 LÓGICA CORRIGIDA: PRIORIDADE PARA O PAGAMENTO ---
 
-  // Data de referência (ou fim do trial ou fim da assinatura paga)
-  const endDate: Date =
-    isTrial && shop.trialEndsAt
-      ? shop.trialEndsAt
-      : (shop.subscriptionEndsAt ?? new Date())
+  // 1. O status do Stripe é a verdade absoluta. Se for true, ele é assinante.
+  const isActive = shop.stripeSubscriptionStatus === true
+
+  const isPro = shop.plan === "PRO"
+
+  // 2. Trial só é válido se ele NÃO for ativo (não pagou ainda) E tiver data futura.
+  // Se ele pagou (isActive = true), isTrial vira false automaticamente.
+  const isTrial =
+    !isActive && !!shop.trialEndsAt && shop.trialEndsAt > new Date()
+
+  // 3. Expirado se não tá ativo e não tá no trial
+  const isExpired = !isActive && !isTrial
+
+  // 4. Data de referência (A Mágica acontece aqui)
+  // Se tá Ativo -> Mostra o vencimento da assinatura (vem do Stripe/Webhook)
+  // Se tá Trial -> Mostra o fim do trial
+  const endDate: Date = isActive
+    ? (shop.subscriptionEndsAt ?? new Date())
+    : (shop.trialEndsAt ?? new Date())
 
   // Calcula a diferença em dias
   const daysRemaining = differenceInDays(endDate, new Date())
+
   // Texto dinâmico do botão
   const buttonText = isTrial ? "Garantir Assinatura" : "Renovar Agora"
 
@@ -80,8 +91,10 @@ export default async function SubscriptionPage() {
                     Período de Teste
                   </Badge>
                 )}
-                {!isExpired && !isTrial && (
-                  <Badge className="bg-green-500">Ativo</Badge>
+                {isActive && (
+                  <Badge className="bg-green-500 hover:bg-green-600">
+                    Ativo
+                  </Badge>
                 )}
               </CardTitle>
               <CardDescription className="mt-2">
@@ -90,7 +103,6 @@ export default async function SubscriptionPage() {
                   : isTrial
                     ? `Você tem ${daysRemaining} dias restantes de teste gratuito.`
                     : `Sua assinatura renova automaticamente em ${
-                        // 👇 Só mostra a data se ela for maior que o ano 2000 (evita o bug de 1969)
                         endDate.getFullYear() > 2000
                           ? format(endDate, "dd 'de' MMMM 'de' yyyy", {
                               locale: ptBR,
@@ -190,14 +202,14 @@ export default async function SubscriptionPage() {
             <BuyButton
               plan="PRO"
               text={
-                isPro && isExpired
-                  ? "Renovar Pro"
-                  : isPro
-                    ? "Plano Atual"
-                    : "Fazer Upgrade"
+                isPro && isActive
+                  ? "Plano Atual" // Se já é PRO e pagou
+                  : isPro && isExpired
+                    ? "Renovar Pro" // Se era PRO mas venceu
+                    : "Fazer Upgrade" // Se é START ou Trial
               }
-              variant="default" // Botão mais chamativo
-              isCurrent={isPro && !isExpired}
+              variant="default"
+              isCurrent={isPro && isActive}
             />
           </CardFooter>
         </Card>

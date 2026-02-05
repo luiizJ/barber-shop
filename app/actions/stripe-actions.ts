@@ -7,7 +7,6 @@ import { stripe } from "@/app/lib/stripe"
 import { redirect } from "next/navigation"
 import type Stripe from "stripe"
 
-// Recebe "START" ou "PRO" como parâmetro
 export async function createCheckoutSession(plan: "START" | "PRO") {
   const session = await getServerSession(authOptions)
 
@@ -15,7 +14,19 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
     return redirect("/")
   }
 
-  // 1. Busca a barbearia do dono
+  if (plan !== "START" && plan !== "PRO") {
+    throw new Error("Plano inválido")
+  }
+
+  // 👇 FIX: Define a URL Base de forma robusta
+  // 1. Tenta pegar a variável pública
+  // 2. Se não tiver, pega a do NextAuth (que você já tem)
+  // 3. Fallback para localhost (segurança para dev)
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    "http://localhost:3000"
+
   const shop = await db.barberShop.findFirst({
     where: {
       ownerId: session.user.id,
@@ -31,15 +42,11 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
   if (!shop) {
     return redirect("/dashboard")
   }
-  // Evitar Dupla Assinatura
-  // Se o cara já está no plano que clicou e está ativo, não deixa pagar de novo.
+
   if (shop.plan === plan && shop.stripeSubscriptionStatus) {
-    // Aqui idealmente mandamos para o Portal de Gerenciamento,
-    // mas por enquanto mandamos para o dashboard com aviso.
     return redirect("/dashboard?error=already_subscribed")
   }
 
-  // 2. Seleciona o ID do preço baseado na escolha
   const priceId =
     plan === "PRO"
       ? process.env.STRIPE_PRICE_PRO
@@ -58,21 +65,17 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
       userId: session.user.id,
       planChoice: plan,
     },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
+    // 👇 FIX: Agora usa a variável 'appUrl' que garantimos que existe
+    success_url: `${appUrl}/dashboard?success=true`,
+    cancel_url: `${appUrl}/dashboard/subscription?canceled=true`, // Mudei para voltar pra tela de assinatura
   }
 
-  //  Gestão de Identidade no Stripe
   if (shop.stripeCustomerId) {
-    // Se ele já comprou antes, usamos o MESMO ID (histórico unificado)
     sessionConfig.customer = shop.stripeCustomerId
   } else {
-    // Se é a primeira vez, preenchemos o e-mail para ele não ter que digitar
-    // (O Stripe cria o Customer ID novo automaticamente)
     sessionConfig.customer_email = session.user.email
   }
 
-  // 4. Cria a sessão
   const checkoutSession = await stripe.checkout.sessions.create(sessionConfig)
 
   if (!checkoutSession.url) {

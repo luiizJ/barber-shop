@@ -136,10 +136,28 @@ export async function deleteService(serviceId: string) {
 }
 
 // --- 4. AÇÃO DE CRIAR BARBEARIA (ONBOARDING) ---
+// ... imports (mantenha os mesmos)
+
 export async function createBarbershop(formData: FormData) {
   const session = await getServerSession(authOptions)
-  if (!session?.user) throw new Error("Faça login primeiro.")
+  if (!session?.user) return { error: "Faça login primeiro.", success: false }
 
+  const userShopsCount = await db.barberShop.count({
+    where: { ownerId: session.user.id },
+  })
+
+  const isPro = session.user.role === "ADMIN"
+  const limit = isPro ? 5 : 1
+
+  if (userShopsCount >= limit) {
+    console.log("❌ Bloqueado pelo limite de lojas.")
+    return {
+      error: `Limite atingido! Você já tem ${userShopsCount} lojas. O limite é ${limit}.`,
+      success: false,
+    }
+  }
+
+  // Preparação dos dados
   const rawData = {
     name: formData.get("name"),
     address: formData.get("address"),
@@ -158,8 +176,15 @@ export async function createBarbershop(formData: FormData) {
     imageUrl: z.string().optional().or(z.literal("")),
   })
 
-  // Valida os dados (agora inclui imageUrl)
-  const data = createShopSchema.parse(rawData)
+  const result = createShopSchema.safeParse(rawData)
+
+  if (!result.success) {
+    const errorMessage = result.error.issues[0].message
+    console.log("❌ Erro de Validação Zod:", errorMessage)
+    return { error: errorMessage, success: false }
+  }
+
+  const data = result.data
 
   // Gera Slug
   const slug =
@@ -172,77 +197,94 @@ export async function createBarbershop(formData: FormData) {
     "-" +
     Math.floor(Math.random() * 1000)
 
-  // 1. Cria a Barbearia
-  const shop = await db.barberShop.create({
-    data: {
-      name: data.name,
-      address: data.address,
-      phones: [data.phone as string],
-      slug: slug,
-      description: data.description,
-      imageUrl:
-        data.imageUrl ||
-        "https://utfs.io/f/5832df58-cfd7-4b3f-b102-42b7e150ced2-16r.png",
-      ownerId: session.user.id,
-      plan: "START",
-      stripeSubscriptionStatus: true,
-      trialEndsAt: addDays(new Date(), 15),
-    },
-  })
+  // 2. TRANSAÇÃO
+  try {
+    await db.$transaction(async (tx) => {
+      // A. Cria a Barbearia
+      const shop = await tx.barberShop.create({
+        data: {
+          name: data.name,
+          address: data.address,
+          phones: [data.phone as string],
+          slug: slug,
+          description: data.description,
+          imageUrl:
+            data.imageUrl ||
+            "https://utfs.io/f/5832df58-cfd7-4b3f-b102-42b7e150ced2-16r.png",
+          ownerId: session.user.id,
+          plan: "START",
+          stripeSubscriptionStatus: true,
+          trialEndsAt: addDays(new Date(), 15),
+        },
+      })
+      console.log("✅ Barbearia criada:", shop.id)
 
-  // 2. Promove Usuário para DONO
-  if (session.user.role === "USER") {
-    await db.user.update({
-      where: { id: session.user.id },
-      data: { role: "BARBER_OWNER" },
+      // B. Promove Usuário
+      if (session.user.role === "USER") {
+        await tx.user.update({
+          where: { id: session.user.id },
+          data: { role: "BARBER_OWNER" },
+        })
+      }
+
+      // C. Cria Barbeiro
+      await tx.barber.create({
+        data: {
+          name: session.user.name || "Barbeiro Principal",
+          barberShopId: shop.id,
+          commissionRate: 100,
+          imageUrl: session.user.image,
+        },
+      })
+
+      // D. Cria Serviços
+      const DEFAULT_SERVICES = [
+        {
+          name: "Corte de Cabelo",
+          description: "Estilo personalizado.",
+          price: 35.0,
+          imageUrl:
+            "https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png",
+        },
+        {
+          name: "Barba Completa",
+          description: "Modelagem com navalha.",
+          price: 25.0,
+          imageUrl:
+            "https://images.unsplash.com/photo-1532710093739-9470acff878f?q=80&w=800&auto=format&fit=crop",
+        },
+        {
+          name: "Pezinho / Acabamento",
+          description: "Limpeza do pescoço.",
+          price: 15.0,
+          imageUrl:
+            "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
+        },
+      ]
+
+      await tx.barberServices.createMany({
+        data: DEFAULT_SERVICES.map((service) => ({
+          name: service.name,
+          description: service.description,
+          price: service.price,
+          imageUrl: service.imageUrl,
+          barberShopId: shop.id,
+        })),
+      })
     })
+
+    revalidatePath("/dashboard")
+    console.log("🎉 Sucesso total!")
+
+    // 👇 MUDANÇA IMPORTANTE: Retornamos sucesso em vez de redirecionar
+    return { success: true }
+  } catch (error) {
+    console.error("❌ ERRO CRÍTICO NO BANCO:", error)
+    return {
+      error: "Erro interno ao criar barbearia. Verifique o terminal.",
+      success: false,
+    }
   }
-
-  // 3. Cria o Dono como o Primeiro Barbeiro
-  await db.barber.create({
-    data: {
-      name: session.user.name || "Barbeiro Principal",
-      barberShopId: shop.id,
-      commissionRate: 100,
-      imageUrl: session.user.image,
-    },
-  })
-  const DEFAULT_SERVICES = [
-    {
-      name: "Corte de Cabelo",
-      description: "Estilo personalizado.",
-      price: 35.0,
-      imageUrl:
-        "https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png",
-    },
-    {
-      name: "Barba Completa",
-      description: "Modelagem com navalha.",
-      price: 25.0,
-      imageUrl:
-        "https://images.unsplash.com/photo-1532710093739-9470acff878f?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      name: "Pezinho / Acabamento",
-      description: "Limpeza do pescoço.",
-      price: 15.0,
-      imageUrl:
-        "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
-    },
-  ]
-  // 4. CRIA OS SERVIÇOS PADRÃO
-  await db.barberServices.createMany({
-    data: DEFAULT_SERVICES.map((service) => ({
-      name: service.name,
-      description: service.description,
-      price: service.price,
-      imageUrl: service.imageUrl,
-      barberShopId: shop.id,
-    })),
-  })
-
-  revalidatePath("/dashboard")
-  redirect("/dashboard")
 }
 // --- 5. AÇÃO DE ATUALIZAR CONFIGURAÇÕES DA LOJA (USADA NA PÁGINA SETTINGS) ---
 export async function updateShopSettings(formData: FormData) {

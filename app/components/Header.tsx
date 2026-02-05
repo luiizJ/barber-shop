@@ -30,16 +30,8 @@ const Header = async () => {
             </Link>
           </Button>
 
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button size="icon" variant="outline">
-                <MenuIcon />
-              </Button>
-            </SheetTrigger>
-
-            {/* 5. Passar a informação para a Sidebar 👇 */}
-            <Sidebar hasBarbershop={hasBarbershop} />
-          </Sheet>
+          {/* 5. Passar a informação para a Sidebar 👇 */}
+          <Sidebar hasBarbershop={hasBarbershop} />
         </CardContent>
       </Card>
     </header>

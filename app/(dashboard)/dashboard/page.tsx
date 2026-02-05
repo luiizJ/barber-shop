@@ -4,7 +4,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/ui/card"
-import { db } from "@/app/lib/prisma"
 import {
   Calendar,
   DollarSign,
@@ -22,28 +21,20 @@ import Link from "next/link"
 import { BookingItem } from "./components/BookingItem"
 import { CreateShopDialog } from "./components/CreateShopDialog"
 import { TrialWarning } from "./components/TrialWarning"
+import { NewBranchButton } from "./components/NewBranchButton"
+import { getDashboardMetrics } from "./actions/get-dashboard-metrics"
 
 export default async function BarberDashboard() {
   // 1. BUSCA SESSÃO
   const session = await getServerSession(authOptions)
   if (!session?.user) return redirect("/")
 
-  // 2. BUSCA BARBEARIA (A variável nasce aqui)
-  const barberShop = await db.barberShop.findFirst({
-    where: { ownerId: session.user.id },
-    include: {
-      services: true,
-      bookings: {
-        where: { date: { gte: new Date() } },
-        orderBy: { date: "asc" },
-        take: 5,
-        include: { service: true, user: true },
-      },
-    },
-  })
+  // 2. BUSCA DADOS (Agora em uma única linha limpa ✨)
+  const { barberShop, userShopsCount } = await getDashboardMetrics(
+    session.user.id,
+  )
 
-  // 3. CASO 1: NÃO TEM LOJA (Verifica se é null aqui)
-  // Se for null, retorna o Dialog e para a execução.
+  // 3. CASO 1: NÃO TEM NENHUMA LOJA
   if (!barberShop) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
@@ -54,22 +45,18 @@ export default async function BarberDashboard() {
     )
   }
 
-  // --- 4. LÓGICA DE BLOQUEIO (Só roda se barberShop existir) ---
-
-  // Verifica Pagamento Stripe
+  // --- 4. LÓGICA DE BLOQUEIO / PAGAMENTO ---
   const isStripeActive = barberShop.stripeSubscriptionStatus === true
 
-  // Verifica Data Manual (Admin)
   const hasActiveDate = barberShop.subscriptionEndsAt
     ? barberShop.subscriptionEndsAt > new Date()
     : false
 
-  // Verifica Trial
   const hasActiveTrial = barberShop.trialEndsAt
     ? barberShop.trialEndsAt > new Date()
     : false
 
-  // Se NENHUMA das 3 condições for verdadeira, bloqueia.
+  // Se tudo falhar, bloqueia o acesso
   if (!isStripeActive && !hasActiveDate && !hasActiveTrial) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
@@ -81,13 +68,13 @@ export default async function BarberDashboard() {
       </div>
     )
   }
-  // -------------------------------------------------------------
 
-  const isPro = barberShop.plan === "PRO"
+  // Define se é PRO (Pelo plano OU se for Admin testando)
+  const isPro = barberShop.plan === "PRO" || session.user.role === "ADMIN"
 
   return (
     <div className="animate-in fade-in space-y-8 duration-500">
-      {/* 1. CABEÇALHO DA PÁGINA */}
+      {/* 1. TOPO: BOAS VINDAS + VER LOJA */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Visão Geral</h1>
@@ -106,14 +93,22 @@ export default async function BarberDashboard() {
         </Button>
       </div>
 
-      {/* 2. ALERTA DE TRIAL */}
+      {/* 2. BARRA DE TÍTULO + BOTÃO INTELIGENTE NOVA FILIAL */}
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Minha Barbearia</h1>
+
+        {/* 👇 AQUI ESTÁ A INTEGRAÇÃO */}
+        <NewBranchButton userShopsCount={userShopsCount} isPro={isPro} />
+      </div>
+
+      {/* 3. ALERTA DE TRIAL */}
       <TrialWarning
         trialEndsAt={barberShop.trialEndsAt}
         stripeStatus={barberShop.stripeSubscriptionStatus}
         plan={barberShop.plan}
       />
 
-      {/* 3. BANNER DE UPGRADE */}
+      {/* 4. BANNER DE UPGRADE (Se não for PRO) */}
       {!isPro && (
         <div className="flex items-center justify-between rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 p-6 text-white shadow-lg">
           <div>
@@ -136,7 +131,7 @@ export default async function BarberDashboard() {
         </div>
       )}
 
-      {/* 4. CARDS DE MÉTRICAS */}
+      {/* 5. CARDS DE MÉTRICAS */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">

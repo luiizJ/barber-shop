@@ -1,8 +1,6 @@
 import { Prisma, type PaymentMethod } from "@prisma/client"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Card, CardContent } from "./ui/card"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import { getBookingStatus } from "../utils/get-booking-status"
 import BookingBadge from "./BookingBadge"
 import { BookingStatus } from "@prisma/client"
@@ -22,6 +20,7 @@ import { Button } from "./ui/button"
 import BookingSummary from "./BookingSummary"
 import { Badge } from "./ui/badge"
 import { Banknote, CreditCard, Smartphone } from "lucide-react"
+import { formatSafe } from "../utils/date-utils"
 
 // 1. TYPE
 // Usamos o "GetPayload" do Prisma para garantir que o TypeScript saiba
@@ -99,14 +98,10 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             {/* LADO DIREITO: Data Formatada */}
             <div className="flex flex-col items-center justify-center border-l-2 border-solid px-5">
               <p className="text-sm text-gray-300 uppercase">
-                {format(booking.date, "MMM", { locale: ptBR })}
+                {formatSafe(booking.date, "MMM")}
               </p>
-              <p className="text-2xl">
-                {format(booking.date, "dd", { locale: ptBR })}
-              </p>
-              <p className="text-sm">
-                {format(booking.date, "HH:mm", { locale: ptBR })}
-              </p>
+              <p className="text-2xl">{formatSafe(booking.date, "dd")}</p>
+              <p className="text-sm">{formatSafe(booking.date, "HH:mm")}</p>
             </div>
           </CardContent>
         </Card>

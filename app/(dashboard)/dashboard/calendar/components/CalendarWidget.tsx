@@ -2,10 +2,10 @@
 
 import { Calendar } from "@/app/components/ui/calendar"
 import { Card, CardContent } from "@/app/components/ui/card"
+import { formatSafe, getZonedDate } from "@/app/utils/date-utils"
 import { ptBR } from "date-fns/locale"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { format } from "date-fns"
 
 interface CalendarWidgetProps {
   bookedDates: Date[]
@@ -17,21 +17,24 @@ export function CalendarWidget({ bookedDates }: CalendarWidgetProps) {
 
   const dateParam = searchParams.get("date")
   const [date, setDate] = useState<Date | undefined>(
-    dateParam ? new Date(dateParam) : new Date(),
+    dateParam ? getZonedDate(new Date(dateParam)) : new Date(),
   )
 
   useEffect(() => {
     if (dateParam) {
-      setDate(new Date(dateParam))
+      setDate(getZonedDate(new Date(dateParam)))
     }
   }, [dateParam])
 
   const handleDateSelect = (newDate: Date | undefined) => {
     setDate(newDate)
     if (newDate) {
-      router.push(`/dashboard/calendar?date=${format(newDate, "yyyy-MM-dd")}`)
+      router.push(
+        `/dashboard/calendar?date=${formatSafe(newDate, "yyyy-MM-dd")}`,
+      )
     }
   }
+  const zonedBookedDates = bookedDates.map((date) => getZonedDate(date))
 
   return (
     <Card className="h-fit">
@@ -43,7 +46,7 @@ export function CalendarWidget({ bookedDates }: CalendarWidgetProps) {
           locale={ptBR}
           className="rounded-md border shadow-sm"
           modifiers={{
-            booked: bookedDates, // Define que esses dias são "booked"
+            booked: zonedBookedDates,
           }}
           modifiersStyles={{
             booked: {

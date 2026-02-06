@@ -8,10 +8,9 @@ import {
   CalendarDays,
   CircleDashed,
 } from "lucide-react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import { PaymentMethod } from "@prisma/client"
 import { useRouter } from "next/navigation"
+import { formatSafe } from "../utils/date-utils"
 
 interface BookingSuccessProps {
   barberShop: {
@@ -40,7 +39,7 @@ const BookingSuccess = ({
   const isPix = paymentMethod === PaymentMethod.PIX
 
   const handleFinalize = () => {
-    const message = `Olá! Acabei de agendar um serviço de *${service.name}* na *${barberShop.name}* para o dia *${format(date, "dd/MM", { locale: ptBR })}* às *${hour}*. Escolhi pagar via ${paymentMethod}. Segue o comprovante!`
+    const message = `Olá! Acabei de agendar um serviço de *${service.name}* na *${barberShop.name}* para o dia *${formatSafe(date, "dd/MM")}* às *${hour}*. Escolhi pagar via ${paymentMethod}. Segue o comprovante!`
     const phone = barberShop.phones[0].replace(/\D/g, "")
     const link = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`
     window.open(link, "_blank")
@@ -80,7 +79,7 @@ const BookingSuccess = ({
             <div>
               <p className="text-sm font-bold">{service.name}</p>
               <p className="text-xs text-gray-400">
-                {format(date, "dd 'de' MMMM", { locale: ptBR })} às {hour}
+                {formatSafe(date, "dd 'de' MMMM")} às {hour}
               </p>
             </div>
           </div>

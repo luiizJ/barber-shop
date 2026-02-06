@@ -1,8 +1,7 @@
-import { format } from "date-fns"
 import { Card, CardContent, CardTitle } from "./ui/card"
-import { ptBR } from "date-fns/locale"
 import type { BarberServices, BarberShop } from "@prisma/client"
 import { PaymentMethod } from "@prisma/client"
+import { formatSafe } from "../utils/date-utils"
 
 interface BookingSummaryProps {
   service: Pick<BarberServices, "name" | "price">
@@ -23,6 +22,7 @@ const BookingSummary = ({
         Resumo
       </CardTitle>
       <CardContent className="p-5">
+        {/* NOME E PREÇO */}
         <div className="flex items-center justify-between">
           <h4 className="font-bold">{service.name}</h4>
           <p className="font-semibold">
@@ -32,20 +32,24 @@ const BookingSummary = ({
             }).format(Number(service.price))}
           </p>
         </div>
+        {/* DATA*/}
         <div className="flex items-center justify-between">
           <h4 className="font-bold text-gray-400">Data</h4>
           <p className="font-semibold">
-            {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+            {formatSafe(selectedDate, "dd 'de' MMMM")}
           </p>
         </div>
+        {/* HORÁRIO */}
         <div className="flex items-center justify-between">
           <h4 className="font-bold text-gray-400">Horario</h4>
-          <p className="font-semibold">{format(selectedDate, "HH:mm")}</p>
+          <p className="font-semibold">{formatSafe(selectedDate, "HH:mm")}</p>
         </div>
+        {/* LOCAL */}
         <div className="flex items-center justify-between">
           <h4 className="font-bold text-gray-400">Local</h4>
           <p className="font-semibold">{barbershop?.name}</p>
         </div>
+        {/* PAGAMENTO */}
         <div className="flex items-center justify-between">
           <h4 className="font-bold text-gray-400">Pagamento</h4>
           <p className="font-semibold">

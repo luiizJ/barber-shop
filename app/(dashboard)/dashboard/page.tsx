@@ -22,14 +22,15 @@ import { BookingItem } from "./components/BookingItem"
 import { CreateShopDialog } from "./components/CreateShopDialog"
 import { TrialWarning } from "./components/TrialWarning"
 import { NewBranchButton } from "./components/NewBranchButton"
-import { getDashboardMetrics } from "./actions/get-dashboard-metrics"
+import { getDashboardMetrics } from "./actions/get-dashboard-metrics" // 👈 Certifique-se que o caminho está certo
 
 export default async function BarberDashboard() {
   // 1. BUSCA SESSÃO
   const session = await getServerSession(authOptions)
   if (!session?.user) return redirect("/")
 
-  // 2. BUSCA DADOS (Agora em uma única linha limpa ✨)
+  // 2. BUSCA DADOS
+  // Se der erro no banco, ele retorna null para não quebrar a página
   const { barberShop, userShopsCount } = await getDashboardMetrics(
     session.user.id,
   )
@@ -45,7 +46,18 @@ export default async function BarberDashboard() {
     )
   }
 
-  // --- 4. LÓGICA DE BLOQUEIO / PAGAMENTO ---
+  // --- 4. TRATAMENTO DE DADOS (CRUCIAL PARA NÃO DAR ERRO NO CELULAR) ---
+  // Filtra agendamentos "fantasmas" (onde o serviço ou usuário foi deletado)
+  const validBookings = barberShop.bookings.filter(
+    (b) => b.service !== null && b.user !== null,
+  )
+
+  // Calcula faturamento apenas com os dados válidos
+  const totalRevenue = validBookings
+    .filter((b) => b.status !== "CANCELLED")
+    .reduce((acc, curr) => acc + Number(curr.price), 0)
+
+  // --- 5. LÓGICA DE BLOQUEIO / PAGAMENTO ---
   const isStripeActive = barberShop.stripeSubscriptionStatus === true
 
   const hasActiveDate = barberShop.subscriptionEndsAt
@@ -142,7 +154,7 @@ export default async function BarberDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {barberShop.bookings.length}
+              {validBookings.length} {/* Usa a lista filtrada */}
             </div>
             <p className="text-muted-foreground mt-1 text-xs">+2 hoje</p>
           </CardContent>
@@ -160,11 +172,8 @@ export default async function BarberDashboard() {
               {Intl.NumberFormat("pt-BR", {
                 style: "currency",
                 currency: "BRL",
-              }).format(
-                barberShop.bookings
-                  .filter((b) => b.status !== "CANCELLED")
-                  .reduce((acc, curr) => acc + Number(curr.price), 0),
-              )}
+              }).format(totalRevenue)}{" "}
+              {/* Usa a variável calculada lá em cima */}
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
               Nos próximos dias
@@ -196,21 +205,22 @@ export default async function BarberDashboard() {
             </Button>
           </div>
 
-          {barberShop.bookings.length === 0 ? (
+          {validBookings.length === 0 ? (
             <Card className="text-muted-foreground flex flex-col items-center justify-center border-dashed p-8">
               <Calendar className="mb-2 h-10 w-10 opacity-20" />
               <p>Agenda livre por enquanto.</p>
             </Card>
           ) : (
-            barberShop.bookings.map((booking) => (
+            // Usa validBookings.map para garantir que service não é null
+            validBookings.map((booking) => (
               <BookingItem
                 key={booking.id}
                 booking={{
                   ...booking,
                   price: Number(booking.price),
                   service: {
-                    ...booking.service,
-                    price: Number(booking.service.price),
+                    ...booking.service!, // A exclamação afirma que não é null (pois filtramos antes)
+                    price: Number(booking.service!.price),
                   },
                 }}
               />

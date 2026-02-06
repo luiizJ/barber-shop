@@ -5,10 +5,9 @@ import ExclusiveBanner from "./components/ExclusiveBanner"
 import BookingItem from "./components/BookingItem"
 import { getServerSession } from "next-auth"
 import { authOptions } from "./lib/auth"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import { getConfirmedBookings } from "./data/get-confirmed-bookings"
 import SearchbarberShops from "./components/SearchBarberShops"
+import { formatSafe } from "./utils/date-utils"
 
 export default async function Home() {
   // 1. Pega a sessão (Pode ser null se não tiver logado)
@@ -31,7 +30,7 @@ export default async function Home() {
         </h2>
         {/* Data Dinâmica  */}
         <p className="text-sm text-gray-400 capitalize">
-          {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
+          {formatSafe(new Date(), "EEEE, d 'de' MMMM")}
         </p>
 
         {/*Busca / Categoria */}

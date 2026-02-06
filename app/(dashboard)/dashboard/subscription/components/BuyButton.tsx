@@ -65,7 +65,7 @@ export function BuyButton({
         text={text}
         variant={variant}
         isCurrent={isCurrent}
-        disabled={disabled} // 👈 Passamos a trava para o botão de submit
+        disabled={disabled}
       />
     </form>
   )

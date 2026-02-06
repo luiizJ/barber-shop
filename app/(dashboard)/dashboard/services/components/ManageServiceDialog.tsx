@@ -23,7 +23,7 @@ interface ManageServiceDialogProps {
   service?: BarberServices
 }
 
-export function ManageServiceDialog({ service }: ManageServiceDialogProps) {
+export const ManageServiceDialog = ({ service }: ManageServiceDialogProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [imageUrl, setImageUrl] = useState(service?.imageUrl || "")

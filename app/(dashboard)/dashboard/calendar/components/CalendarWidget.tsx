@@ -11,7 +11,7 @@ interface CalendarWidgetProps {
   bookedDates: Date[]
 }
 
-export function CalendarWidget({ bookedDates }: CalendarWidgetProps) {
+const CalendarWidget = ({ bookedDates }: CalendarWidgetProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -65,3 +65,4 @@ export function CalendarWidget({ bookedDates }: CalendarWidgetProps) {
     </Card>
   )
 }
+export default CalendarWidget

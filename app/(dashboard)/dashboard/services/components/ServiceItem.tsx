@@ -21,7 +21,7 @@ interface ServiceItemProps {
   }
 }
 
-export function ServiceItem({ service }: ServiceItemProps) {
+const ServiceItem = ({ service }: ServiceItemProps) => {
   const handleDelete = async () => {
     const confirm = window.confirm(
       `Tem certeza que deseja excluir "${service.name}"?`,
@@ -93,3 +93,4 @@ export function ServiceItem({ service }: ServiceItemProps) {
     </Card>
   )
 }
+export default ServiceItem

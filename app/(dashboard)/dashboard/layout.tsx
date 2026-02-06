@@ -18,19 +18,17 @@ export default async function DashboardLayout({
     select: { name: true, imageUrl: true },
   })
 
-  // Se não tiver loja ainda, renderiza o conteúdo normal (que vai ser a tela de criar loja)
+  // Se não tiver loja ainda, renderiza o conteúdo normal
   if (!shop) {
     return <div className="min-h-screen">{children}</div>
   }
 
   return (
-    <div className="bg-muted/20 min-h-screen">
-      {/* Sidebar Fixa */}
+    <div className="bg-muted/20 min-h-screen w-full p-5">
       <Sidebar shopName={shop.name} shopImage={shop.imageUrl} />
 
-      {/* Conteúdo da Página (com margem para não ficar embaixo da sidebar) */}
-      <main className="pl-64">
-        <div className="container px-8 py-8">{children}</div>
+      <main className="flex-1 md:pl-64">
+        <div className="h-full w-full">{children}</div>
       </main>
     </div>
   )

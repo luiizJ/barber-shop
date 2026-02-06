@@ -22,7 +22,7 @@ import { BookingItem } from "./components/BookingItem"
 import { CreateShopDialog } from "./components/CreateShopDialog"
 import { TrialWarning } from "./components/TrialWarning"
 import { NewBranchButton } from "./components/NewBranchButton"
-import { getDashboardMetrics } from "./actions/get-dashboard-metrics" // 👈 Certifique-se que o caminho está certo
+import { getDashboardMetrics } from "./actions/get-dashboard-metrics"
 
 export default async function BarberDashboard() {
   // 1. BUSCA SESSÃO
@@ -30,7 +30,6 @@ export default async function BarberDashboard() {
   if (!session?.user) return redirect("/")
 
   // 2. BUSCA DADOS
-  // Se der erro no banco, ele retorna null para não quebrar a página
   const { barberShop, userShopsCount } = await getDashboardMetrics(
     session.user.id,
   )
@@ -38,7 +37,7 @@ export default async function BarberDashboard() {
   // 3. CASO 1: NÃO TEM NENHUMA LOJA
   if (!barberShop) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 p-4 text-center">
         <h1 className="text-2xl font-bold">Bem-vindo ao Sistema</h1>
         <p>Para começar, crie sua barbearia.</p>
         <CreateShopDialog />
@@ -46,32 +45,27 @@ export default async function BarberDashboard() {
     )
   }
 
-  // --- 4. TRATAMENTO DE DADOS (CRUCIAL PARA NÃO DAR ERRO NO CELULAR) ---
-  // Filtra agendamentos "fantasmas" (onde o serviço ou usuário foi deletado)
+  // --- 4. TRATAMENTO DE DADOS ---
   const validBookings = barberShop.bookings.filter(
     (b) => b.service !== null && b.user !== null,
   )
 
-  // Calcula faturamento apenas com os dados válidos
   const totalRevenue = validBookings
     .filter((b) => b.status !== "CANCELLED")
     .reduce((acc, curr) => acc + Number(curr.price), 0)
 
   // --- 5. LÓGICA DE BLOQUEIO / PAGAMENTO ---
   const isStripeActive = barberShop.stripeSubscriptionStatus === true
-
   const hasActiveDate = barberShop.subscriptionEndsAt
     ? barberShop.subscriptionEndsAt > new Date()
     : false
-
   const hasActiveTrial = barberShop.trialEndsAt
     ? barberShop.trialEndsAt > new Date()
     : false
 
-  // Se tudo falhar, bloqueia o acesso
   if (!isStripeActive && !hasActiveDate && !hasActiveTrial) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 p-4 text-center">
         <h1 className="text-2xl font-bold text-red-500">Acesso Bloqueado</h1>
         <p>Sua assinatura está inativa. Regularize para continuar.</p>
         <Button asChild variant="destructive">
@@ -81,36 +75,38 @@ export default async function BarberDashboard() {
     )
   }
 
-  // Define se é PRO (Pelo plano OU se for Admin testando)
   const isPro = barberShop.plan === "PRO" || session.user.role === "ADMIN"
 
   return (
-    <div className="animate-in fade-in space-y-8 duration-500">
+    <div className="animate-in fade-in flex-1 space-y-6 p-4 duration-500 md:space-y-8 md:p-8">
       {/* 1. TOPO: BOAS VINDAS + VER LOJA */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Visão Geral</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            Visão Geral
+          </h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             Bem-vindo de volta, {session.user.name}
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link
-            href={`/barbershops/${barberShop.slug}`}
-            target="_blank"
-            className="gap-2"
-          >
-            <ExternalLink className="h-4 w-4" /> Ver Loja Online
-          </Link>
-        </Button>
       </div>
 
-      {/* 2. BARRA DE TÍTULO + BOTÃO INTELIGENTE NOVA FILIAL */}
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Minha Barbearia</h1>
+      {/* 2. BARRA DE TÍTULO + BOTÃO INTELIGENTE */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-xl font-bold md:text-2xl">Minha Barbearia</h1>
 
-        {/* 👇 AQUI ESTÁ A INTEGRAÇÃO */}
-        <NewBranchButton userShopsCount={userShopsCount} isPro={isPro} />
+        <div className="flex w-full gap-2 md:w-auto">
+          <NewBranchButton userShopsCount={userShopsCount} isPro={isPro} />
+          <Button variant="outline" className="md:w-auto" asChild>
+            <Link
+              href={`/barbershops/${barberShop.slug}`}
+              target="_blank"
+              className="gap-2"
+            >
+              <ExternalLink className="h-4 w-4" /> Ver Loja Online
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* 3. ALERTA DE TRIAL */}
@@ -120,22 +116,22 @@ export default async function BarberDashboard() {
         plan={barberShop.plan}
       />
 
-      {/* 4. BANNER DE UPGRADE (Se não for PRO) */}
+      {/* 4. BANNER DE UPGRADE */}
       {!isPro && (
-        <div className="flex items-center justify-between rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 p-6 text-white shadow-lg">
+        <div className="flex flex-col gap-4 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 p-6 text-white shadow-lg md:flex-row md:items-center md:justify-between">
           <div>
-            <h3 className="flex items-center gap-2 text-xl font-bold">
+            <h3 className="flex items-center gap-2 text-lg font-bold md:text-xl">
               <Zap className="fill-yellow-400 text-yellow-400" /> Turbine sua
               Barbearia
             </h3>
-            <p className="mt-1 text-blue-100">
+            <p className="mt-1 text-sm text-blue-100 md:text-base">
               Você está no plano START. Libere agendamentos ilimitados e taxas
               zero.
             </p>
           </div>
           <Button
             variant="secondary"
-            className="font-bold text-blue-700"
+            className="w-full font-bold text-blue-700 md:w-auto"
             asChild
           >
             <Link href="/dashboard/subscription">Fazer Upgrade</Link>
@@ -153,9 +149,7 @@ export default async function BarberDashboard() {
             <Calendar className="text-primary h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {validBookings.length} {/* Usa a lista filtrada */}
-            </div>
+            <div className="text-3xl font-bold">{validBookings.length}</div>
             <p className="text-muted-foreground mt-1 text-xs">+2 hoje</p>
           </CardContent>
         </Card>
@@ -172,8 +166,7 @@ export default async function BarberDashboard() {
               {Intl.NumberFormat("pt-BR", {
                 style: "currency",
                 currency: "BRL",
-              }).format(totalRevenue)}{" "}
-              {/* Usa a variável calculada lá em cima */}
+              }).format(totalRevenue)}
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
               Nos próximos dias
@@ -198,9 +191,14 @@ export default async function BarberDashboard() {
       <div className="grid gap-8 md:grid-cols-[1fr_300px]">
         {/* LISTA DE AGENDAMENTOS */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <h2 className="text-xl font-bold">Próximos Clientes</h2>
-            <Button variant="ghost" size="sm" asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="w-full justify-start md:w-auto"
+            >
               <Link href="/dashboard/calendar">Ver Agenda Completa</Link>
             </Button>
           </div>
@@ -211,7 +209,6 @@ export default async function BarberDashboard() {
               <p>Agenda livre por enquanto.</p>
             </Card>
           ) : (
-            // Usa validBookings.map para garantir que service não é null
             validBookings.map((booking) => (
               <BookingItem
                 key={booking.id}
@@ -219,7 +216,7 @@ export default async function BarberDashboard() {
                   ...booking,
                   price: Number(booking.price),
                   service: {
-                    ...booking.service!, // A exclamação afirma que não é null (pois filtramos antes)
+                    ...booking.service!,
                     price: Number(booking.service!.price),
                   },
                 }}

@@ -99,7 +99,7 @@ export default async function ServicesPage() {
           <ManageServiceDialog />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {shop.services.map((service) => (
             <ServiceItem
               key={service.id}

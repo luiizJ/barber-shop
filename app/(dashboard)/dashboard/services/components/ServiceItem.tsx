@@ -37,15 +37,15 @@ export function ServiceItem({ service }: ServiceItemProps) {
   }
 
   return (
-    <Card className="group flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg">
+    <Card className="group flex flex-col overflow-hidden p-3 transition-shadow duration-300 hover:shadow-lg">
       {/* ÁREA DA IMAGEM */}
-      <div className="bg-muted relative h-40 w-full">
+      <div className="bg-muted relative flex h-50 w-full items-center">
         {service.imageUrl ? (
           <Image
             src={service.imageUrl}
             alt={service.name}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="rounded-md object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="text-muted-foreground bg-muted/50 flex h-full w-full items-center justify-center">
@@ -62,7 +62,7 @@ export function ServiceItem({ service }: ServiceItemProps) {
         </div>
       </div>
 
-      <CardContent className="flex-1 space-y-2 p-4">
+      <CardContent className="flex-1 space-y-1">
         <h3
           className="truncate text-lg leading-tight font-bold"
           title={service.name}
@@ -74,10 +74,10 @@ export function ServiceItem({ service }: ServiceItemProps) {
         </p>
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between gap-2 p-4 pt-0">
+      <CardFooter className="flex items-center justify-between gap-2 p-1 pt-0">
         {/* Botão Editar (O Dialog gera o botão) */}
         <div className="w-full">
-          {/* ⚠️ TypeScript reclama se passar o tipo errado, mas agora tá alinhado */}
+          {/*  TypeScript reclama se passar o tipo errado, mas agora tá alinhado */}
           <ManageServiceDialog service={service as any} />
         </div>
 

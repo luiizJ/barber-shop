@@ -21,7 +21,7 @@ import { getDayBookings } from "../actions/getDayBooking"
 import { createBooking } from "../actions/createBooking"
 import { PaymentMethod } from "@prisma/client"
 import PaymentMethods from "./PaymentMethods"
-import BookingSuccess from "./BookingSuccess" // 👈 Importado o componente de sucesso
+import BookingSuccess from "./BookingSuccess"
 
 interface SchedulingProps {
   barberShop: {
@@ -43,12 +43,10 @@ interface SchedulingProps {
 const Scheduling = ({ service, barberShop }: SchedulingProps) => {
   // 1. HOOKS E ESTADOS
   const { data, status } = useSession()
-
   // Estado do Método de Pagamento
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     PaymentMethod.CASH,
   )
-
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [hour, setHour] = useState<string | undefined>()
   const [sheetIsOpen, setSheetIsOpen] = useState(false)
@@ -142,7 +140,14 @@ const Scheduling = ({ service, barberShop }: SchedulingProps) => {
       setBookingConfirmed(true)
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao realizar reserva!")
+
+      // TRATAMENTO DE ERRO MELHORADO
+      if (error instanceof Error) {
+        // Mostra a mensagem exata que veio do backend
+        toast.error(error.message)
+      } else {
+        toast.error("Erro ao realizar reserva!")
+      }
     } finally {
       setSubmitIsLoading(false)
     }

@@ -18,8 +18,7 @@ export const createBooking = async ({
   date,
   paymentMethod,
 }: CreateBookingParams) => {
-  // 1. SEGURANÇA DE IDENTIDADE 👮
-  // Pegamos o usuário direto da sessão do servidor.
+  // 1. SEGURANÇA DE IDENTIDADE
   const session = await getServerSession(authOptions)
 
   if (!session?.user) {
@@ -41,7 +40,6 @@ export const createBooking = async ({
   if (checkLastBooking) {
     throw new Error("Aguarde um momento antes de realizar outro agendamento.")
   }
-  //  FIM DA PROTEÇÃO
 
   // 3. SEGURANÇA DE DADOS (Verifica se o serviço existe mesmo)
   const service = await db.barberServices.findUnique({
@@ -56,8 +54,20 @@ export const createBooking = async ({
   if (!service) {
     throw new Error("Serviço não encontrado")
   }
+  // 3. ANTI-DUPLICIDADE (Conflito de horários)
+  const bookingAlreadyExists = await db.booking.findFirst({
+    where: {
+      barberShopId: service.barberShop.id,
+      date: date,
+    },
+  })
 
-  // 4. CRIAÇÃO BLINDADA
+  if (bookingAlreadyExists) {
+    throw new Error(
+      "Ops! Este horário acabou de ser reservado por outra pessoa.",
+    )
+  }
+  // 5. CRIAÇÃO BLINDADA
   await db.booking.create({
     data: {
       serviceId: service.id,

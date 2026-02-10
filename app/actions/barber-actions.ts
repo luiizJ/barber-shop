@@ -24,23 +24,12 @@ export async function upsertService(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user) throw new Error("Não autorizado.")
 
-  const isOwner = session.user.role === "BARBER_OWNER"
-  const isAdmin = session.user.role === "ADMIN"
+  // const isOwner = session.user.role === "BARBER_OWNER"
+  // const isAdmin = session.user.role === "ADMIN"
 
-  if (!isOwner && !isAdmin) {
-    throw new Error("Acesso negado. Apenas donos podem gerenciar serviços.")
-  }
-
-  // LIMPEZA DOS DADOS
-  const rawData = {
-    id: formData.get("id") ? (formData.get("id") as string) : undefined,
-    name: formData.get("name") as string,
-    description: formData.get("description") as string,
-    price: Number(formData.get("price")),
-    imageUrl: (formData.get("imageUrl") as string) || "",
-  }
-
-  const data = serviceSchema.parse(rawData)
+  // if (!isOwner && !isAdmin) {
+  //   throw new Error("Acesso negado. Apenas donos podem gerenciar serviços.")
+  // }
 
   const shop = await db.barberShop.findFirst({
     where: { ownerId: session.user.id },
@@ -53,6 +42,17 @@ export async function upsertService(formData: FormData) {
   })
 
   if (!shop) throw new Error("Barbearia não encontrada.")
+
+  // LIMPEZA DOS DADOS
+  const rawData = {
+    id: formData.get("id") ? (formData.get("id") as string) : undefined,
+    name: formData.get("name") as string,
+    description: formData.get("description") as string,
+    price: Number(formData.get("price")),
+    imageUrl: (formData.get("imageUrl") as string) || "",
+  }
+
+  const data = serviceSchema.parse(rawData)
 
   const limits = getPlanLimits(shop.plan)
 
@@ -112,6 +112,7 @@ export async function upsertService(formData: FormData) {
   })
 
   revalidatePath("/dashboard/services")
+  revalidatePath("/")
 }
 
 // --- 3. AÇÃO DE DELETAR SERVIÇO ---

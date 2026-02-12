@@ -137,26 +137,48 @@ export async function upsertService(formData: FormData) {
 // --- 3. AÇÃO DE DELETAR SERVIÇO ---
 export async function deleteService(serviceId: string) {
   const session = await getServerSession(authOptions)
-  if (!session?.user) return
+  if (!session?.user) return { error: "Não autorizado" }
 
-  const shop = await db.barberShop.findFirst({
-    where: { ownerId: session.user.id },
-  })
-
-  if (!shop) return
-
-  await db.barberServices.delete({
-    where: {
-      id: serviceId,
-      barberShopId: shop.id,
+  // 1. Buscamos o serviço e pedimos os dados da loja (barberShop) junto
+  const service = await db.barberServices.findUnique({
+    where: { id: serviceId },
+    select: {
+      id: true,
+      barberShop: {
+        select: { ownerId: true },
+      },
     },
   })
 
-  revalidatePath("/dashboard/services")
+  if (!service) return { error: "Serviço não encontrado." }
+
+  // 2. SEGURANÇA TOTAL:
+  // Verificamos se o dono da loja desse serviço é O MESMO cara que está logado.
+  // Isso impede que o 'meuovodecodorna' apague serviço do 'vizinho@gmail.com'.
+  // 2.1. Sou eu mesmo (dono de 1, 2 ou 10 lojas)?
+  const isOwner = service.barberShop.ownerId === session.user.id
+  // 2.2. Ou sou o ADMIN da plataforma (Suporte)?
+  const isAdmin = session.user.role === "ADMIN"
+  // Se não for nem um nem outro, BLOQUEIA.
+  if (!isOwner && !isAdmin) {
+    return { error: "Ei! Esse serviço não é seu." }
+  }
+
+  // 3. DELETAR: Agora podemos deletar só pelo ID, sem medo
+  try {
+    await db.barberServices.delete({
+      where: { id: serviceId }, // Removemos direto pelo ID único
+    })
+
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (error) {
+    console.error(error)
+    return { error: "Erro ao excluir." }
+  }
 }
 
 // --- 4. AÇÃO DE CRIAR BARBEARIA (ONBOARDING) ---
-// ... imports (mantenha os mesmos)
 
 export async function createBarbershop(formData: FormData) {
   const session = await getServerSession(authOptions)

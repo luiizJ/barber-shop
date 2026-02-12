@@ -148,12 +148,18 @@ export async function createBarbershop(formData: FormData) {
     where: { id: session.user.id },
     select: { role: true },
   })
-
+  // 2. Verifica se ele tem alguma barbearia com plano PRO ativo
+  const hasProShop = await db.barberShop.findFirst({
+    where: {
+      ownerId: session.user.id,
+      plan: "PRO", // Ou "PREMIUM", verifique como está no seu banco
+    },
+  })
   const userShopsCount = await db.barberShop.count({
     where: { ownerId: session.user.id },
   })
 
-  const isPro = user?.role === "ADMIN"
+  const isPro = user?.role === "ADMIN" || !!hasProShop
   const limit = isPro ? 5 : 1
 
   if (userShopsCount >= limit) {

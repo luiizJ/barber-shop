@@ -3,10 +3,17 @@
 import { db } from "@/app/lib/prisma"
 import { startOfDay, endOfDay } from "date-fns"
 
-export const getCalendarData = async (userId: string, dateParam?: string) => {
+export const getCalendarData = async (
+  userId: string,
+  shopSlug: string,
+  dateParam?: string,
+) => {
   // 1. Busca a loja do usuário
   const shop = await db.barberShop.findFirst({
-    where: { ownerId: userId },
+    where: {
+      ownerId: userId,
+      slug: shopSlug,
+    },
     select: { id: true },
   })
 

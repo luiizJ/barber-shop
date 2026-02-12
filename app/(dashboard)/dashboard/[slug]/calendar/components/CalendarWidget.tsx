@@ -4,7 +4,8 @@ import { Calendar } from "@/app/components/ui/calendar"
 import { Card, CardContent } from "@/app/components/ui/card"
 import { formatSafe, getZonedDate } from "@/app/utils/date-utils"
 import { ptBR } from "date-fns/locale"
-import { useRouter, useSearchParams } from "next/navigation"
+// 👇 1. Importamos useParams
+import { useRouter, useSearchParams, useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 interface CalendarWidgetProps {
@@ -14,6 +15,9 @@ interface CalendarWidgetProps {
 const CalendarWidget = ({ bookedDates }: CalendarWidgetProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
+  // 👇 2. Pegamos o slug da URL atual (ex: bom-jesus-889)
+  const params = useParams()
+  const slug = params.slug
 
   const dateParam = searchParams.get("date")
   const [date, setDate] = useState<Date | undefined>(
@@ -28,12 +32,15 @@ const CalendarWidget = ({ bookedDates }: CalendarWidgetProps) => {
 
   const handleDateSelect = (newDate: Date | undefined) => {
     setDate(newDate)
-    if (newDate) {
+    if (newDate && slug) {
+      // 👇 3. MUDANÇA CHAVE: Incluímos o slug na rota
+      // Agora ele vai para /dashboard/bom-jesus-889/calendar?date=...
       router.push(
-        `/dashboard/calendar?date=${formatSafe(newDate, "yyyy-MM-dd")}`,
+        `/dashboard/${slug}/calendar?date=${formatSafe(newDate, "yyyy-MM-dd")}`,
       )
     }
   }
+
   const zonedBookedDates = bookedDates.map((date) => getZonedDate(date))
 
   return (
@@ -51,7 +58,6 @@ const CalendarWidget = ({ bookedDates }: CalendarWidgetProps) => {
           modifiersStyles={{
             booked: {
               fontWeight: "bold",
-              // Adiciona uma bolinha azul embaixo do número
               textDecoration:
                 "underline decoration-primary decoration-4 underline-offset-4",
             },
@@ -65,4 +71,5 @@ const CalendarWidget = ({ bookedDates }: CalendarWidgetProps) => {
     </Card>
   )
 }
+
 export default CalendarWidget

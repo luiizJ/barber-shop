@@ -1,8 +1,8 @@
-import { BookingItem } from "../../components/BookingItem"
 import { Calendar as CalendarIcon, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Prisma } from "@prisma/client"
+import { BookingItem } from "../../../components/BookingItem"
 
 interface DayBookingsListProps {
   selectedDate: Date
@@ -47,7 +47,7 @@ const DayBookingsList = ({
               key={booking.id}
               // Cast forçado para garantir compatibilidade com o componente legado se necessário,
               // mas a tipagem acima já deve resolver.
-              booking={booking as any}
+              booking={booking}
             />
           ))}
         </div>

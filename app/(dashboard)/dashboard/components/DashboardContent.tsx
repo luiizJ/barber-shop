@@ -23,6 +23,8 @@ import { Prisma } from "@prisma/client"
 // Tipagem segura para os dados que vêm da Action
 interface DashboardContentProps {
   userName: string
+  allShops: any[] // 👈 Adicione isso
+  currentShop: any
   data: {
     barberShop: any // Pode refinar usando Prisma types se quiser ser estrito
     metrics: {
@@ -37,7 +39,12 @@ interface DashboardContentProps {
   }
 }
 
-export function DashboardContent({ userName, data }: DashboardContentProps) {
+export function DashboardContent({
+  userName,
+  data,
+  allShops,
+  currentShop,
+}: DashboardContentProps) {
   const { barberShop, metrics, access } = data
 
   return (
@@ -178,10 +185,7 @@ export function DashboardContent({ userName, data }: DashboardContentProps) {
             </Card>
           ) : (
             barberShop.bookings.map((booking: any) => (
-              <BookingItem
-                key={booking.id}
-                booking={booking} // Já está sanitizado na action
-              />
+              <BookingItem key={booking.id} booking={booking} />
             ))
           )}
         </div>

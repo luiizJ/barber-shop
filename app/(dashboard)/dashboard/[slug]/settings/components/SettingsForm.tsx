@@ -25,7 +25,6 @@ interface SettingsFormProps {
 export function SettingsForm({ shop }: SettingsFormProps) {
   const [isPending, setIsPending] = useState(false)
 
-  // Wrapper para lidar com o envio e mostrar Toast
   const handleSubmit = async (formData: FormData) => {
     setIsPending(true)
     try {
@@ -49,9 +48,15 @@ export function SettingsForm({ shop }: SettingsFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Usamos 'action={handleSubmit}' para interceptar e dar feedback */}
           <form action={handleSubmit} className="space-y-4">
             <input type="hidden" name="shopId" value={shop.id} />
+
+            {/* 2. FOTO DE CAPA */}
+            <div className="grid gap-2">
+              <Label>Imagem de Capa</Label>
+              {/* O componente gerencia o input hidden 'imageUrl' internamente */}
+              <ShopImageUpload defaultImage={shop.imageUrl || ""} />
+            </div>
 
             <div className="grid gap-2">
               <Label htmlFor="name">Nome da Barbearia</Label>
@@ -82,7 +87,6 @@ export function SettingsForm({ shop }: SettingsFormProps) {
               <Input
                 id="phone"
                 name="phone"
-                // Pega o primeiro telefone ou string vazia
                 defaultValue={shop.phones?.[0] || ""}
                 required
                 placeholder="(83) 99999-9999"
@@ -98,12 +102,6 @@ export function SettingsForm({ shop }: SettingsFormProps) {
                 className="min-h-[100px]"
                 placeholder="Conte um pouco sobre sua barbearia..."
               />
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Imagem de Capa</Label>
-              {/* Seu componente de Upload reutilizado */}
-              <ShopImageUpload defaultImage={shop.imageUrl} />
             </div>
 
             <div className="flex justify-end pt-4">

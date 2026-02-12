@@ -8,14 +8,23 @@ import Link from "next/link"
 import { getSettingsData } from "./actions/get-settings-data"
 import { SettingsForm } from "./components/SettingsForm"
 
-export default async function SettingsPage() {
+// 👇 1. Adicionamos a tipagem para receber o slug da URL
+interface SettingsPageProps {
+  params: Promise<{ slug: string }>
+}
+
+export default async function SettingsPage({ params }: SettingsPageProps) {
   // 1. Auth Check
   const session = await getServerSession(authOptions)
   if (!session?.user) return redirect("/")
 
-  // 2. Fetch Data
-  const shop = await getSettingsData(session.user.id)
+  //  2. Extraímos o slug
+  const { slug } = await params
 
+  //  3. Passamos o slug para a função de busca
+  const shop = await getSettingsData(session.user.id, slug)
+
+  // Se não achar a loja com esse slug, volta pro dashboard
   if (!shop) return redirect("/dashboard")
 
   // 3. Render
@@ -23,7 +32,8 @@ export default async function SettingsPage() {
     <div className="animate-in fade-in space-y-6 duration-500">
       {/* Header com botão de voltar */}
       <div className="flex items-center gap-4">
-        <Link href="/dashboard">
+        {/*  Opcional: O voltar pode ir para o dashboard da loja específica */}
+        <Link href={`/dashboard/${slug}`}>
           <Button variant="outline" size="icon">
             <ArrowLeft size={18} />
           </Button>

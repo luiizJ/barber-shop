@@ -20,9 +20,10 @@ interface ServicesListProps {
     percentage: number
     isLimitReached: boolean
   }
+  shopId: string
 }
 
-const ServicesList = ({ services, plan }: ServicesListProps) => {
+const ServicesList = ({ services, plan, shopId }: ServicesListProps) => {
   return (
     <div className="space-y-6">
       {/* 1. CABEÇALHO DA LISTA */}
@@ -40,7 +41,7 @@ const ServicesList = ({ services, plan }: ServicesListProps) => {
             Limite Atingido
           </Button>
         ) : (
-          <ManageServiceDialog />
+          <ManageServiceDialog shopId={shopId} />
         )}
       </div>
 
@@ -85,7 +86,7 @@ const ServicesList = ({ services, plan }: ServicesListProps) => {
           <p className="text-muted-foreground mt-1 mb-4 text-sm">
             Comece adicionando seu primeiro corte.
           </p>
-          <ManageServiceDialog />
+          <ManageServiceDialog shopId={shopId} />
         </div>
       ) : (
         // Grid Responsivo

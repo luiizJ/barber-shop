@@ -21,9 +21,13 @@ import { ImageUpload } from "@/app/components/ImageUpload"
 
 interface ManageServiceDialogProps {
   service?: BarberServices
+  shopId?: string
 }
 
-export const ManageServiceDialog = ({ service }: ManageServiceDialogProps) => {
+export const ManageServiceDialog = ({
+  service,
+  shopId,
+}: ManageServiceDialogProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [imageUrl, setImageUrl] = useState(service?.imageUrl || "")
@@ -33,6 +37,10 @@ export const ManageServiceDialog = ({ service }: ManageServiceDialogProps) => {
     try {
       if (service?.id) {
         formData.append("id", service.id)
+      }
+
+      if (shopId) {
+        formData.append("barberShopId", shopId)
       }
       // Garante que a URL da imagem vá junto
       if (imageUrl) {
@@ -83,6 +91,7 @@ export const ManageServiceDialog = ({ service }: ManageServiceDialogProps) => {
         </DialogHeader>
 
         <form action={handleSubmit} className="grid gap-4 py-4">
+          {shopId && <input type="hidden" name="barberShopId" value={shopId} />}
           {/* FOTO (Agora centralizada e maior destaque) */}
           <div className="grid gap-2">
             <Label>Foto do Serviço</Label>

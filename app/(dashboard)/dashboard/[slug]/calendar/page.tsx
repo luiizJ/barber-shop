@@ -6,7 +6,6 @@ import CalendarWidget from "./components/CalendarWidget"
 import DayBookingsList from "./components/DayBookingsList"
 
 interface CalendarPageProps {
-  // 👇 1. No Next 15, precisamos declarar o params como Promise
   params: Promise<{ slug: string }>
   searchParams: Promise<{
     date?: string
@@ -14,22 +13,21 @@ interface CalendarPageProps {
 }
 
 export default async function CalendarPage({
-  params, // 👇 2. Recebemos o params aqui
+  params,
   searchParams,
 }: CalendarPageProps) {
   // 1. AUTH
   const session = await getServerSession(authOptions)
   if (!session?.user) return redirect("/")
 
-  // 👇 3. REVELAR AS PROMISES (Obrigatório no Next 15)
+  //  3. REVELAR AS PROMISES
   const resolvedParams = await params
   const resolvedSearchParams = await searchParams
 
   const slug = resolvedParams.slug
   const date = resolvedSearchParams.date
 
-  // 👇 4. A ORDEM CORRETA: (userId, slug, date)
-  // Antes você estava passando a data no lugar do slug!
+  //  4. A ORDEM CORRETA: (userId, slug, date)
   const data = await getCalendarData(session.user.id, slug, date)
 
   // Se não achou a loja, redireciona para o dashboard geral

@@ -2,10 +2,10 @@
 import { db } from "@/app/lib/prisma"
 import { getPlanLimits } from "@/app/lib/plan-limits"
 
-export const getServicesData = async (userId: string) => {
+export const getServicesData = async (userId: string, slug: string) => {
   // 1. Busca Loja e Serviços
   const shop = await db.barberShop.findFirst({
-    where: { ownerId: userId },
+    where: { ownerId: userId, slug: slug },
     include: {
       services: {
         orderBy: { name: "asc" },

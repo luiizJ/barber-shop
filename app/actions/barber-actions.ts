@@ -278,7 +278,7 @@ export async function createBarbershop(formData: FormData) {
     console.log("🎉 Sucesso total!")
 
     // 👇 MUDANÇA IMPORTANTE: Retornamos sucesso em vez de redirecionar
-    return { success: true }
+    return { success: true, slug: slug }
   } catch (error) {
     console.error("❌ ERRO CRÍTICO NO BANCO:", error)
     return {

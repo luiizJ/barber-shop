@@ -1,8 +1,7 @@
 import { Calendar as CalendarIcon, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Prisma } from "@prisma/client"
-import { BookingItem } from "../../../components/BookingItem"
+import { BookingItem } from "../../components/BookingItem"
 
 interface DayBookingsListProps {
   selectedDate: Date

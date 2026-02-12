@@ -1,84 +1,98 @@
-"use server"
-
+import { authOptions } from "@/app/lib/auth"
 import { db } from "@/app/lib/prisma"
+import { getServerSession } from "next-auth"
+import {
+  startOfDay,
+  endOfDay,
+  subDays,
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+} from "date-fns"
 
-export async function getDashboardHomeData(userId: string) {
-  // 1. Busca Barbearia e Contagem de Lojas
-  const [barberShop, userShopsCount] = await Promise.all([
-    db.barberShop.findFirst({
-      where: { ownerId: userId },
+export async function getDashboardMetrics(range: string = "today") {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return null
+
+  // 1. Definição de Datas (Atual vs Anterior)
+  let dateStart: Date, dateEnd: Date
+  let prevDateStart: Date, prevDateEnd: Date
+  let comparisonLabel: string
+
+  const now = new Date()
+
+  switch (range) {
+    case "month":
+      dateStart = startOfMonth(now)
+      dateEnd = endOfMonth(now)
+      prevDateStart = startOfMonth(subMonths(now, 1))
+      prevDateEnd = endOfMonth(subMonths(now, 1))
+      comparisonLabel = "vs. mês anterior"
+      break
+    case "yesterday":
+      dateStart = startOfDay(subDays(now, 1))
+      dateEnd = endOfDay(subDays(now, 1))
+      prevDateStart = startOfDay(subDays(now, 2))
+      prevDateEnd = endOfDay(subDays(now, 2))
+      comparisonLabel = "vs. anteontem"
+      break
+    default: // "today"
+      dateStart = startOfDay(now)
+      dateEnd = endOfDay(now)
+      prevDateStart = startOfDay(subDays(now, 1))
+      prevDateEnd = endOfDay(subDays(now, 1))
+      comparisonLabel = "vs. ontem"
+      break
+  }
+
+  // 2. Função auxiliar para buscar dados
+  const fetchMetrics = async (start: Date, end: Date) => {
+    const shops = await db.barberShop.findMany({
+      where: { ownerId: session.user.id },
       include: {
         bookings: {
-          where: {
-            date: { gte: new Date() }, // Futuros ou hoje
-            status: { not: "CANCELLED" }, // Ignora cancelados
-          },
-          include: {
-            service: true,
-            user: true,
-          },
-          orderBy: { date: "asc" },
+          // ⚠️ Confirme se é 'bookings' ou 'appointments'
+          where: { date: { gte: start, lte: end } },
+          include: { service: true },
         },
       },
-    }),
-    db.barberShop.count({
-      where: { ownerId: userId },
-    }),
+    })
+
+    const appointments = shops.reduce(
+      (acc, shop) => acc + shop.bookings.length,
+      0,
+    )
+    const revenue = shops.reduce((acc, shop) => {
+      return (
+        acc + shop.bookings.reduce((sum, b) => sum + Number(b.service.price), 0)
+      )
+    }, 0)
+
+    return { shops, appointments, revenue }
+  }
+
+  // 3. Executa as buscas em paralelo (Performance 🚀)
+  const [currentData, prevData] = await Promise.all([
+    fetchMetrics(dateStart, dateEnd),
+    fetchMetrics(prevDateStart, prevDateEnd),
   ])
 
-  if (!barberShop) return null
-
-  // 2. SEGURANÇA: Filtra agendamentos "órfãos" (sem serviço ou usuário)
-  // Isso impede que o dashboard quebre se um serviço for deletado.
-  const validBookings = barberShop.bookings.filter(
-    (b) => b.service !== null && b.user !== null,
-  )
-
-  // 3. SANITIZAÇÃO (Decimal -> Number)
-  // Usamos 'validBookings' aqui para garantir que b.service existe
-  const sanitizedBookings = validBookings.map((b) => ({
-    ...b,
-    price: Number(b.price),
-    service: {
-      ...b.service!,
-      price: Number(b.service!.price),
-    },
-  }))
-
-  // 4. Cálculo de Faturamento (Total)
-  const totalRevenue = sanitizedBookings.reduce(
-    (acc, curr) => acc + curr.price,
-    0,
-  )
-
-  // 5. Lógica de Acesso (Bloqueio)
-  const isStripeActive = barberShop.stripeSubscriptionStatus === true
-  const hasActiveDate = barberShop.subscriptionEndsAt
-    ? barberShop.subscriptionEndsAt > new Date()
-    : false
-  const hasActiveTrial = barberShop.trialEndsAt
-    ? barberShop.trialEndsAt > new Date()
-    : false
-
-  // Se tudo for falso, está bloqueado
-  const isBlocked = !isStripeActive && !hasActiveDate && !hasActiveTrial
-
-  // 6. Definição de PRO
-  const isPro = barberShop.plan === "PRO"
+  // 4. Cálculo de Porcentagem
+  const calculateChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0
+    return ((current - previous) / previous) * 100
+  }
 
   return {
-    barberShop: {
-      ...barberShop,
-      bookings: sanitizedBookings,
-    },
-    metrics: {
-      totalRevenue,
-      futureBookingsCount: sanitizedBookings.length,
-      userShopsCount,
-    },
-    access: {
-      isBlocked,
-      isPro,
-    },
+    shops: currentData.shops,
+    totalRevenue: currentData.revenue,
+    totalAppointments: currentData.appointments,
+    revenueChange: calculateChange(currentData.revenue, prevData.revenue),
+    appointmentsChange: calculateChange(
+      currentData.appointments,
+      prevData.appointments,
+    ),
+    comparisonLabel,
+    userName: session.user.name,
   }
 }

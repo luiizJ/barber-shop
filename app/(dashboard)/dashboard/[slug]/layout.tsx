@@ -2,7 +2,7 @@ import { db } from "@/app/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/lib/auth"
 import { redirect } from "next/navigation"
-import { Sidebar } from "../components/Sidebar"
+import { Sidebar } from "./components/Sidebar"
 
 export default async function ShopLayout({
   children,

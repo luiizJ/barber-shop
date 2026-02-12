@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/lib/auth"
 import { redirect } from "next/navigation"
 import { getDashboardHomeData } from "../actions/get-dashboard-home-data"
-import { DashboardContent } from "../components/DashboardContent"
+import { DashboardContent } from "./components/DashboardContent"
 
 export default async function BarberDashboard({
   params,

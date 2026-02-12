@@ -26,7 +26,7 @@ interface DashboardContentProps {
   allShops: any[]
   currentShop: any
   data: {
-    barberShop: any // Pode refinar usando Prisma types se quiser ser estrito
+    barberShop: any
     metrics: {
       totalRevenue: number
       futureBookingsCount: number
@@ -53,10 +53,10 @@ export function DashboardContent({
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            Visão Geral
+            Visão Geral da {barberShop.name}
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Bem-vindo de volta, {userName}
+            Bem-vindo, {userName}
           </p>
         </div>
       </div>

@@ -11,6 +11,7 @@ import {
   Settings,
   ChevronsUpDown,
   Store,
+  LayoutDashboard, // 👈 Importado novo ícone
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -31,6 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu"
+import { Separator } from "@/app/components/ui/separator" // 👈 Importado Separator (opcional, se não tiver use div border)
 
 interface SidebarProps {
   shops: {
@@ -44,11 +46,13 @@ interface SidebarProps {
 
 export function Sidebar({ shops, currentShop }: SidebarProps) {
   const pathname = usePathname()
+  // Esconde o menu mobile em páginas de settings se preferir, ou mantém.
   const isSettingsPage =
     pathname.includes("/settings") || pathname.includes("/subscription")
 
   return (
     <>
+      {/* --- MOBILE --- */}
       <div className="md:hidden">
         {!isSettingsPage && (
           <Sheet>
@@ -71,6 +75,7 @@ export function Sidebar({ shops, currentShop }: SidebarProps) {
         )}
       </div>
 
+      {/* --- DESKTOP --- */}
       <div className="bg-card fixed top-0 left-0 hidden h-screen w-64 flex-col border-r md:flex">
         <SidebarContent shops={shops} currentShop={currentShop} />
       </div>
@@ -82,24 +87,20 @@ function SidebarContent({ shops, currentShop }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
-  //  Lógica de active corrigida para rotas dinâmicas
+  // Verifica se estamos na raiz (Holding)
+  const isRootDashboard = pathname === "/dashboard"
+
   const isActive = (path: string) => {
-    // Se o path for apenas o dashboard da loja
     if (path === `/dashboard/${currentShop?.slug}`) {
       return pathname === path ? "secondary" : "ghost"
     }
-    // Para subpáginas (services, calendar, etc)
     return pathname.includes(path) ? "secondary" : "ghost"
   }
 
-  //  1. Função para trocar de loja (Muda a rota inteira)
   const handleShopChange = (newSlug: string) => {
-    // Se você mudar de loja, ele te joga para a home daquela loja
     router.push(`/dashboard/${newSlug}`)
   }
 
-  //  2. Função para construir links dinâmicos
-  // Agora o link vira: /dashboard/nome-da-loja/servicos
   const getLink = (subPath: string) => {
     const slug = currentShop?.slug || shops[0]?.slug
     return `/dashboard/${slug}${subPath}`
@@ -107,6 +108,7 @@ function SidebarContent({ shops, currentShop }: SidebarProps) {
 
   return (
     <div className="flex h-full flex-col">
+      {/* 1. HEADER DA SIDEBAR (Seletor de Loja) */}
       <div className="border-b p-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -155,8 +157,29 @@ function SidebarContent({ shops, currentShop }: SidebarProps) {
         </DropdownMenu>
       </div>
 
+      {/* 2. ÁREA DE LINKS */}
       <div className="flex-1 space-y-1 px-3 py-4">
-        {/* Notar que passamos apenas o final da URL para o getLink */}
+        {/* 👇 NOVO: BOTÃO VISÃO GERAL (HOLDING) */}
+        <Button
+          variant={isRootDashboard ? "secondary" : "ghost"}
+          className="mb-2 w-full justify-start gap-2"
+          asChild
+        >
+          <Link href="/dashboard">
+            <LayoutDashboard className="h-4 w-4" />
+            Visão Geral
+          </Link>
+        </Button>
+
+        {/* Separador Visual entre Holding e Loja */}
+        <div className="my-2 px-4 pb-1">
+          <Separator className="bg-zinc-800" />
+          <p className="text-muted-foreground mt-2 text-[10px] font-medium tracking-wider uppercase">
+            Menu da Loja
+          </p>
+        </div>
+
+        {/* LINKS DA LOJA ESPECÍFICA */}
         <Button
           variant={isActive(`/dashboard/${currentShop?.slug}`)}
           className="w-full justify-start gap-2"
@@ -208,6 +231,7 @@ function SidebarContent({ shops, currentShop }: SidebarProps) {
         </Button>
       </div>
 
+      {/* 3. FOOTER (LOGOUT) */}
       <div className="border-t p-4">
         <Button
           variant="outline"

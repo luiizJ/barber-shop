@@ -1,47 +1,56 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/lib/auth"
 import { redirect } from "next/navigation"
-import { db } from "@/app/lib/prisma"
-import { CreateShopDialog } from "./components/CreateShopDialog"
+import { getDashboardMetrics } from "./actions/get-dashboard-metrics"
+import { DashboardKpi } from "./components/dashboard-kpi"
+import { DashboardEmptyState } from "./components/dashboard-empty-state"
+import { DashboardDateFilter } from "./components/DashboardDateFilter"
+import { CreateShopDialog } from "./[slug]/components/CreateShopDialog"
+import DashboardShopList from "./components/dashboard-shop-list"
 
-export default async function DashboardRootPage() {
-  const session = await getServerSession(authOptions)
+//  Recebe os searchParams (parametro de URL)
+export default async function DashboardRootPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>
+}) {
+  const { range } = await searchParams
 
-  // 1. Proteção de Login
-  if (!session?.user) return redirect("/")
+  // Passa o range escolhido para a busca de dados
+  const data = await getDashboardMetrics(range)
 
-  // 2. Busca a loja no banco
-  const firstShop = await db.barberShop.findFirst({
-    where: { ownerId: session.user.id },
-    select: { slug: true },
-  })
+  if (!data) return redirect("/")
 
-  // 3. CENÁRIO A: O usuário já tem loja
-  // Redireciona ele para a URL dinâmica: /dashboard/nome-da-loja
-  if (firstShop) {
-    return redirect(`/dashboard/${firstShop.slug}`)
+  if (data.shops.length === 0) {
+    return <DashboardEmptyState userName={data.userName} />
   }
 
-  // 4. CENÁRIO B: O usuário é novo (não tem loja)
-  // Renderizamos a tela de criação aqui mesmo, na URL /dashboard
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center gap-6 bg-zinc-950 p-4 text-center">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tighter text-white sm:text-4xl">
-          Quase lá, {session.user.name?.split(" ")[0]}! ✂️
-        </h1>
-        <p className="max-w-[600px] text-zinc-400 md:text-xl">
-          Sua conta foi criada. Agora, cadastre sua primeira unidade para
-          começar a gerenciar sua agenda.
-        </p>
+    <div className="animate-in fade-in space-y-8 p-8 duration-500">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Visão Geral</h2>
+          <p className="text-muted-foreground">
+            Resumo consolidado da performance da sua equipe.
+          </p>
+        </div>
+
+        {/*  Controles: Filtro de Data + Botão de Criar */}
+        <div className="flex items-center gap-2">
+          <DashboardDateFilter />
+          <CreateShopDialog />
+        </div>
       </div>
 
-      {/* Esse é o componente que você já tem com o formulário */}
-      <CreateShopDialog />
+      <DashboardKpi
+        totalRevenue={data.totalRevenue}
+        totalAppointments={data.totalAppointments}
+        totalShops={data.shops.length}
+        // 👇 Novos dados para o gráfico de tendência
+        revenueChange={data.revenueChange}
+        appointmentsChange={data.appointmentsChange}
+        comparisonLabel={data.comparisonLabel}
+      />
 
-      <p className="text-xs text-zinc-500">
-        Configuração rápida em menos de 1 minuto.
-      </p>
+      <DashboardShopList shops={data.shops} />
     </div>
   )
 }

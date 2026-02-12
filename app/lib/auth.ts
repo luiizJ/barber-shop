@@ -15,7 +15,7 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-  // 1. MUDANÇA CRUCIAL: Forçar estratégia JWT
+  // 1. Forçar estratégia JWT
   session: {
     strategy: "jwt",
   },

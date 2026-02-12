@@ -82,7 +82,7 @@ function SidebarContent({ shops, currentShop }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
-  // 👇 Lógica de active corrigida para rotas dinâmicas
+  //  Lógica de active corrigida para rotas dinâmicas
   const isActive = (path: string) => {
     // Se o path for apenas o dashboard da loja
     if (path === `/dashboard/${currentShop?.slug}`) {
@@ -92,13 +92,13 @@ function SidebarContent({ shops, currentShop }: SidebarProps) {
     return pathname.includes(path) ? "secondary" : "ghost"
   }
 
-  // 👇 1. Função para trocar de loja (Muda a rota inteira)
+  //  1. Função para trocar de loja (Muda a rota inteira)
   const handleShopChange = (newSlug: string) => {
     // Se você mudar de loja, ele te joga para a home daquela loja
     router.push(`/dashboard/${newSlug}`)
   }
 
-  // 👇 2. Função para construir links dinâmicos
+  //  2. Função para construir links dinâmicos
   // Agora o link vira: /dashboard/nome-da-loja/servicos
   const getLink = (subPath: string) => {
     const slug = currentShop?.slug || shops[0]?.slug

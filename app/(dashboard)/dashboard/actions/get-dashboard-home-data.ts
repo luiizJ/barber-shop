@@ -2,7 +2,7 @@
 
 import { db } from "@/app/lib/prisma"
 
-// 👇 Mudança: Agora aceitamos o shopSlug como segundo argumento
+// Mudança: Agora aceitamos o shopSlug como segundo argumento
 export async function getDashboardHomeData(userId: string, shopSlug: string) {
   // 1. Buscamos todas as lojas do usuário (para o menu lateral)
   const allShops = await db.barberShop.findMany({
@@ -14,7 +14,7 @@ export async function getDashboardHomeData(userId: string, shopSlug: string) {
 
   // 2. Buscamos a loja específica do slug que está na URL
   const barberShop = await db.barberShop.findUnique({
-    where: { slug: shopSlug }, // 👈 Busca exata pelo nome na URL
+    where: { slug: shopSlug },
     include: {
       bookings: {
         where: {
@@ -43,7 +43,7 @@ export async function getDashboardHomeData(userId: string, shopSlug: string) {
 
   // 4. Retorno completo para o componente
   return {
-    allShops, // 👈 Enviamos a lista para o seletor
+    allShops,
     currentShop: {
       id: barberShop.id,
       name: barberShop.name,
@@ -57,7 +57,7 @@ export async function getDashboardHomeData(userId: string, shopSlug: string) {
       userShopsCount: allShops.length,
     },
     access: {
-      isBlocked: false, // Adicione sua lógica de Stripe aqui se necessário
+      isBlocked: false,
       isPro: barberShop.plan === "PRO",
     },
   }

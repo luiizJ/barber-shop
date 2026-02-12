@@ -10,15 +10,14 @@ interface BuyButtonProps {
   text: string
   variant?: "default" | "outline" | "secondary" | "destructive"
   isCurrent?: boolean
-  disabled?: boolean // 👈 Recebemos o bloqueio aqui
+  disabled?: boolean
 }
 
-// O botão interno que sabe se o form está enviando
 function SubmitButton({
   text,
   variant,
   isCurrent,
-  disabled, // 👈 Recebemos aqui também
+  disabled,
 }: Omit<BuyButtonProps, "plan">) {
   const { pending } = useFormStatus()
 
@@ -40,7 +39,7 @@ function SubmitButton({
       type="submit"
       variant={variant || "default"}
       className="w-full font-bold"
-      // 👇 O botão fica desativado se estiver carregando (pending) OU se a gente mandou bloquear (disabled)
+      // O botão fica desativado se estiver carregando (pending) OU se a gente mandou bloquear (disabled)
       disabled={pending || disabled}
     >
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

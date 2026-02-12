@@ -9,14 +9,13 @@ import Image from "next/image"
 import { deleteService } from "@/app/actions/barber-actions"
 import { ManageServiceDialog } from "./ManageServiceDialog"
 
-// 👇 Atualizamos a Interface para aceitar Number
 interface ServiceItemProps {
   service: {
     id: string
     name: string
     description: string
     imageUrl: string
-    price: number // Mudou de Decimal/any para number
+    price: number
     barberShopId: string
   }
 }

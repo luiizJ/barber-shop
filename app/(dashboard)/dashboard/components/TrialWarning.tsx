@@ -1,4 +1,4 @@
-"use client" // Adicione use client pois usa Link
+"use client"
 
 import { differenceInDays } from "date-fns"
 import Link from "next/link"

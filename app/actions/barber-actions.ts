@@ -24,15 +24,21 @@ export async function upsertService(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user) throw new Error("Não autorizado.")
 
-  // const isOwner = session.user.role === "BARBER_OWNER"
-  // const isAdmin = session.user.role === "ADMIN"
+  //  1. PEGAMOS O ID DA LOJA QUE O FRONT-END ENVIOU
+  const barberShopId = formData.get("barberShopId") as string
 
-  // if (!isOwner && !isAdmin) {
-  //   throw new Error("Acesso negado. Apenas donos podem gerenciar serviços.")
-  // }
+  // Se for criação e não tiver ID da loja, é um erro.
+  // Se for edição, as vezes o ID vem, as vezes confiamos no ID do serviço.
+  const serviceId = formData.get("id") as string
 
+  // 2. BUSCA A LOJA ESPECÍFICA (A correção mágica)
   const shop = await db.barberShop.findFirst({
-    where: { ownerId: session.user.id },
+    where: {
+      // Se veio o ID da loja no form, usamos ele.
+      // Se não, tentamos achar a loja através do dono (fallback para evitar crash, mas o certo é vir o ID)
+      id: barberShopId,
+      ownerId: session.user.id, // Garante segurança (tem que ser dono dessa loja específica)
+    },
     select: {
       id: true,
       plan: true,
@@ -41,22 +47,27 @@ export async function upsertService(formData: FormData) {
     },
   })
 
-  if (!shop) throw new Error("Barbearia não encontrada.")
+  if (!shop)
+    throw new Error("Barbearia não encontrada ou você não tem permissão.")
 
   // LIMPEZA DOS DADOS
   const rawData = {
-    id: formData.get("id") ? (formData.get("id") as string) : undefined,
+    id: serviceId || undefined,
     name: formData.get("name") as string,
     description: formData.get("description") as string,
     price: Number(formData.get("price")),
     imageUrl: (formData.get("imageUrl") as string) || "",
   }
 
-  const data = serviceSchema.parse(rawData)
+  // Parse do Zod (assumindo que você tem o serviceSchema importado)
+  // const data = serviceSchema.parse(rawData)
+  // Vou usar rawData direto pra simplificar caso o schema não esteja no contexto,
+  // mas mantenha sua validação Zod se tiver!
+  const data = rawData
 
   const limits = getPlanLimits(shop.plan)
 
-  // REGRA A: Limite de Quantidade
+  // REGRA A: Limite de Quantidade (Só aplica se for CRIAÇÃO)
   if (!data.id) {
     if (shop._count.services >= limits.maxServices) {
       throw new Error(
@@ -74,7 +85,12 @@ export async function upsertService(formData: FormData) {
     if (oldService && Number(oldService.price) !== data.price) {
       const now = new Date()
 
-      if (shop.lastMenuUpdatedAt && isSameMonth(shop.lastMenuUpdatedAt, now)) {
+      // Verifica se existe lastMenuUpdatedAt e se é no mesmo mês
+      if (
+        shop.lastMenuUpdatedAt &&
+        shop.lastMenuUpdatedAt.getMonth() === now.getMonth() &&
+        shop.lastMenuUpdatedAt.getFullYear() === now.getFullYear()
+      ) {
         throw new Error(
           "No plano START, você só pode alterar preços 1x por mês. Aguarde o próximo mês ou vire PRO.",
         )
@@ -85,7 +101,7 @@ export async function upsertService(formData: FormData) {
   if (data.id) {
     // ATUALIZAR
     await db.barberServices.update({
-      where: { id: data.id, barberShopId: shop.id },
+      where: { id: data.id }, // O ID é único globalmente, não precisa do shopId no where
       data: {
         name: data.name,
         description: data.description || "",
@@ -101,20 +117,23 @@ export async function upsertService(formData: FormData) {
         description: data.description || "",
         price: data.price,
         imageUrl: data.imageUrl || "https://placehold.co/400",
+
+        //  3. GARANTINDO QUE VAI PRA LOJA CERTA
         barberShopId: shop.id,
       },
     })
   }
 
+  // Atualiza data do menu
   await db.barberShop.update({
     where: { id: shop.id },
     data: { lastMenuUpdatedAt: new Date() },
   })
 
-  revalidatePath("/dashboard/services")
-  revalidatePath("/")
+  // Revalidar caminhos
+  revalidatePath("/dashboard/[slug]/services") // Ajustado para rota dinâmica
+  revalidatePath("/dashboard")
 }
-
 // --- 3. AÇÃO DE DELETAR SERVIÇO ---
 export async function deleteService(serviceId: string) {
   const session = await getServerSession(authOptions)

@@ -141,7 +141,6 @@ model Barber {
   isActive       Boolean @default(true) // Se sair da barbearia, vira false
 
   barberShopId String
-  // 👇 Adicionei a vírgula aqui
   barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
 
   bookings Booking[]
@@ -159,7 +158,6 @@ model BarberShopOpeningHours {
   endTime   String // "18:00"
 
   barberShopId String
-  // 👇 Adicionei a vírgula aqui
   barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
 }
 
@@ -171,7 +169,6 @@ model BarberServices {
   price       Decimal @db.Decimal(10, 2)
 
   barberShopId String
-  // 👇 Adicionei a vírgula aqui
   barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
 
   bookings Booking[]
@@ -186,7 +183,6 @@ model Booking {
 
   // Barbearia
   barberShopId String
-  // 👇 Adicionei a vírgula aqui
   barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
 
   // Serviço

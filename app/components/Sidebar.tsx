@@ -11,7 +11,7 @@ import {
   MenuIcon,
 } from "lucide-react"
 import { Button } from "./ui/button"
-// 👇 Verifique se o Sheet está importado DAQUI e não do lucide
+//
 import {
   Sheet,
   SheetClose,
@@ -49,7 +49,6 @@ const Sidebar = ({ hasBarbershop }: SidebarProps) => {
 
   const isOwner = session?.user && hasBarbershop
 
-  // 👇 O ERRO ESTAVA AQUI: Faltava esse <Sheet> envolvendo tudo
   return (
     <Sheet>
       <SheetTrigger asChild>

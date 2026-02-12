@@ -23,7 +23,6 @@ const SubscribeButton = ({ userId }: SubscribeButtonProps) => {
     <Button
       className="w-full font-bold"
       size="lg"
-      // 👇 AQUI ESTÁ A MÁGICA:
       // Chama o Google direto e manda voltar pro Dashboard
       onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
     >

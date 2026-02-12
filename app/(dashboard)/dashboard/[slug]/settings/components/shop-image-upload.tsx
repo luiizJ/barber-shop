@@ -45,7 +45,7 @@ export function ShopImageUpload({ defaultImage }: ShopImageUploadProps) {
       {/* 3. BOTÃO DE UPLOAD (UploadThing) */}
       <div className="w-fit">
         <UploadButton
-          endpoint="imageUploader" // Certifique-se que esse nome bate com seu core/server.ts
+          endpoint="imageUploader"
           appearance={{
             button:
               "bg-primary text-primary-foreground hover:bg-primary/90 ut-uploading:cursor-not-allowed",

@@ -69,7 +69,6 @@ export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
         </TableHeader>
         <TableBody>
           {shops.map((shop) => {
-            // 👇 AQUI ESTAVA O ERRO: Agora usamos a função certa e pegamos o objeto retornado
             const statusInfo = getDaysStatus(shop.subscriptionEndsAt)
 
             const isPro = shop.plan === "PRO"
@@ -112,7 +111,7 @@ export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
                       : "—"}
                   </div>
                   {shop.subscriptionEndsAt && (
-                    // 👇 AQUI: Usamos statusInfo.color e statusInfo.text direto
+                    //  AQUI: Usamos statusInfo.color e statusInfo.text direto
                     <span className={`text-xs ${statusInfo.color}`}>
                       ({statusInfo.text})
                     </span>

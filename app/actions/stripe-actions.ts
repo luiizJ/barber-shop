@@ -18,7 +18,7 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
     throw new Error("Plano inválido")
   }
 
-  // 👇 FIX: Define a URL Base de forma robusta
+  //  FIX: Define a URL Base de forma robusta
   // 1. Tenta pegar a variável pública
   // 2. Se não tiver, pega a do NextAuth (que você já tem)
   // 3. Fallback para localhost (segurança para dev)

@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "@/app/components/ui/dialog" // 👈 Mudou de Sheet para Dialog
+} from "@/app/components/ui/dialog"
 import { useState } from "react"
 import { toast } from "sonner"
 import { PlusCircle, Loader2, Edit } from "lucide-react"
@@ -77,7 +77,6 @@ export const ManageServiceDialog = ({
         )}
       </DialogTrigger>
 
-      {/* sm:max-w-[425px] deixa o modal com largura ideal para forms */}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>

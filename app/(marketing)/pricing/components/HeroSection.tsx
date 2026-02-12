@@ -49,7 +49,7 @@ const HeroSection = () => {
             variant="outline"
             size="lg"
             className="h-14 w-full px-8 text-lg sm:w-auto"
-            onClick={handleLoginClick} // 👈 A mágica acontece aqui
+            onClick={handleLoginClick}
           >
             Já tenho conta
           </Button>

@@ -54,12 +54,12 @@ export function CreateShopDialog() {
 
       const result = await createBarbershop(formData)
 
-      // 🛑 ERRO DO SERVIDOR (Ex: Limite Atingido)
+      //  ERRO DO SERVIDOR ( Limite Atingido)
       if (result?.error) {
         toast.error("Ops! Não foi possível criar.", {
-          description: result.error, // Mostra a mensagem do servidor
+          description: result.error,
         })
-        return // 👈 Para aqui e mantém o modal aberto
+        return //  Para aqui e mantém o modal aberto
       }
 
       // ✅ SUCESSO
@@ -70,7 +70,7 @@ export function CreateShopDialog() {
 
         setIsOpen(false) // Fecha modal
         reset() // Limpa campos
-        router.push("/dashboard/services") // 👈 Redireciona para serviços
+        router.push("/dashboard/services") //  Redireciona para serviços
         router.refresh() // Atualiza sidebar
       }
     } catch (error) {

@@ -14,7 +14,7 @@ const updateShopSchema = z.object({
   // 👇 1. MUDANÇA: Agora aceita números negativos (pra você remover dias)
   daysToAdd: z.coerce.number().min(-3650).max(3650),
 
-  // Tratamento do booleano (já corrigido antes)
+  // Tratamento do booleano
   status: z.preprocess((val) => val === "true" || val === "on", z.boolean()),
 })
 

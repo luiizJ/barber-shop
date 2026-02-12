@@ -15,15 +15,15 @@ import {
 } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import Link from "next/link"
-import { BookingItem } from "./BookingItem" // Seu componente existente
-import { TrialWarning } from "./TrialWarning" // Seu componente existente
-import { NewBranchButton } from "./NewBranchButton" // Seu componente existente
+import { BookingItem } from "./BookingItem"
+import { TrialWarning } from "./TrialWarning"
+import { NewBranchButton } from "./NewBranchButton"
 import { Prisma } from "@prisma/client"
 
 // Tipagem segura para os dados que vêm da Action
 interface DashboardContentProps {
   userName: string
-  allShops: any[] // 👈 Adicione isso
+  allShops: any[]
   currentShop: any
   data: {
     barberShop: any // Pode refinar usando Prisma types se quiser ser estrito

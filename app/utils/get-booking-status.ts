@@ -1,4 +1,4 @@
-import { BookingStatus } from "@prisma/client" // 👈 Importamos o Enum do Prisma
+import { BookingStatus } from "@prisma/client"
 import { isFuture } from "date-fns"
 
 interface GetBookingStatusProps {

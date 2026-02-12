@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/lib/auth"
 import { redirect } from "next/navigation"
-import { getSubscriptionData } from "./actions/get-subscription-data" // 👇 Action
-import { SubscriptionContent } from "./components/SubscriptionContent" // 👇 UI Component
+import { getSubscriptionData } from "./actions/get-subscription-data"
+import { SubscriptionContent } from "./components/SubscriptionContent"
 
 export default async function SubscriptionPage() {
   // 1. Auth

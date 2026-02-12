@@ -1,4 +1,4 @@
-import { CreateShopDialog } from "../components/CreateShopDialog"
+import { CreateShopDialog } from "../[slug]/components/CreateShopDialog"
 
 const page = () => {
   return <CreateShopDialog />

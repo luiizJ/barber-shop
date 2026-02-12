@@ -143,11 +143,17 @@ export async function createBarbershop(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return { error: "Faça login primeiro.", success: false }
 
+  // 🔍 BUSCA DIRETA NO BANCO: Evita erro de sessão desatualizada
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+
   const userShopsCount = await db.barberShop.count({
     where: { ownerId: session.user.id },
   })
 
-  const isPro = session.user.role === "ADMIN"
+  const isPro = user?.role === "ADMIN"
   const limit = isPro ? 5 : 1
 
   if (userShopsCount >= limit) {

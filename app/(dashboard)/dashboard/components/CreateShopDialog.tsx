@@ -21,6 +21,7 @@ import { toast } from "sonner"
 import { ImageUpload } from "@/app/components/ImageUpload"
 import { Textarea } from "@/app/components/ui/textarea"
 import { createBarbershop } from "@/app/actions/barber-actions"
+import { useSession } from "next-auth/react"
 
 // 1. Schema de Validação
 const formSchema = z.object({
@@ -36,6 +37,7 @@ type FormValues = z.infer<typeof formSchema>
 export function CreateShopDialog() {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
+  const { update } = useSession()
 
   // 2. Configuração do Formulário
   const {
@@ -78,9 +80,10 @@ export function CreateShopDialog() {
         toast.success("Barbearia criada com sucesso!", {
           description: "Bem-vindo ao time! Vamos configurar seus serviços.",
         })
+        await update()
         setIsOpen(false)
         reset()
-        router.push("/dashboard/services") // Redireciona para serviços
+        router.push(`/dashboard/${result.slug}`)
         router.refresh()
       }
     } catch (error) {

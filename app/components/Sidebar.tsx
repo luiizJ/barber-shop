@@ -107,6 +107,23 @@ const Sidebar = ({ hasBarbershop }: SidebarProps) => {
                     />
                     Google
                   </Button>
+                  <div className="text-muted-foreground text-center text-[10px] leading-relaxed">
+                    Ao entrar, você concorda com nossos{" "}
+                    <Link
+                      href="/terms"
+                      className="text-primary font-medium underline-offset-4 hover:underline"
+                    >
+                      Termos de Uso
+                    </Link>{" "}
+                    e nossa{" "}
+                    <Link
+                      href="/privacy"
+                      className="text-primary font-medium underline-offset-4 hover:underline"
+                    >
+                      Política de Privacidade
+                    </Link>
+                    .
+                  </div>
                 </DialogContent>
               </Dialog>
             </>

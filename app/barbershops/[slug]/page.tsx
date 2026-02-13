@@ -46,18 +46,9 @@ const BarberShopPage = async ({ params }: BarberShopPageProps) => {
             <ChevronLeft />
           </Link>
         </Button>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              size="icon"
-              variant="outline"
-              className="absolute top-4 right-4"
-            >
-              <MenuIcon />
-            </Button>
-          </SheetTrigger>
-          <Sidebar />
-        </Sheet>
+        <div className="absolute top-4 right-4">
+          <Sidebar hasBarbershop={Boolean(barbershop.ownerId)} />
+        </div>
       </div>
       {/* Area do titulo / endereço */}
       <div className="border-b border-solid p-5">

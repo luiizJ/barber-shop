@@ -1,8 +1,7 @@
 import { Card, CardContent } from "./ui/card"
 import Link from "next/link"
 import Sidebar from "./Sidebar"
-import { MenuIcon, Scissors } from "lucide-react"
-import { Sheet, SheetTrigger } from "./ui/sheet"
+import { Scissors } from "lucide-react"
 import { Button } from "./ui/button"
 import { getBarbershopOwnerState } from "../data/get-barbershop-owner-stat"
 

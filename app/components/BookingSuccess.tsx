@@ -38,13 +38,18 @@ const BookingSuccess = ({
 
   const isPix = paymentMethod === PaymentMethod.PIX
 
+  const handleGoToBookings = () => {
+    router.push("/bookings")
+    onClose()
+  }
+
   const handleFinalize = () => {
     const message = `Olá! Acabei de agendar um serviço de *${service.name}* na *${barberShop.name}* para o dia *${formatSafe(date, "dd/MM")}* às *${hour}*. Escolhi pagar via ${paymentMethod}. Segue o comprovante!`
     const phone = barberShop.phones[0].replace(/\D/g, "")
     const link = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`
     window.open(link, "_blank")
     router.push("/bookings")
-    onClose()
+    handleGoToBookings()
   }
 
   return (
@@ -92,7 +97,11 @@ const BookingSuccess = ({
           <Smartphone className="mr-2 h-4 w-4" />
           {isPix ? "Enviar Comprovante" : "Confirmar no WhatsApp"}
         </Button>
-        <Button onClick={onClose} className="w-full" variant="default">
+        <Button
+          onClick={handleGoToBookings}
+          className="w-full"
+          variant="default"
+        >
           Ir para Meus Agendamentos
         </Button>
       </div>

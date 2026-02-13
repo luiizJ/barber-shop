@@ -10,36 +10,40 @@ export async function getSubscriptionData(userId: string) {
 
   if (!shop) return null
 
-  // --- LÓGICA DE NEGÓCIO ---
+  const now = new Date()
 
-  // 1. Status Base
-  const isActive = shop.stripeSubscriptionStatus === true
-  const isPro = shop.plan === "PRO"
+  // 1. Status Base (Forçamos boolean com o '!!' e checagem de data)
+  const isActive =
+    !!shop.stripeSubscriptionStatus && // Garante que não é null
+    !!shop.subscriptionEndsAt && // Garante que existe data
+    shop.subscriptionEndsAt > now
 
   // 2. Cálculo do Trial
-  // Só é trial se NÃO pagou ainda E a data futura existe
-  const isTrial =
-    !isActive && !!shop.trialEndsAt && shop.trialEndsAt > new Date()
+  const isTrial = !isActive && !!shop.trialEndsAt && shop.trialEndsAt > now
 
-  // 3. Cálculo de Expirado
+  // 3. Expirado?
   const isExpired = !isActive && !isTrial
 
-  // 4. Data de Referência (Vencimento ou Fim do Trial)
+  // 4. É PRO?
+  const isPro = shop.plan === "PRO"
+
+  // 5. Data Final (Fallback para agora se for nulo)
   const endDate = isActive
-    ? (shop.subscriptionEndsAt ?? new Date())
-    : (shop.trialEndsAt ?? new Date())
+    ? (shop.subscriptionEndsAt ?? now)
+    : (shop.trialEndsAt ?? now)
 
-  const daysRemaining = differenceInDays(endDate, new Date())
+  const daysRemaining = differenceInDays(endDate, now)
 
+  // 👇 RETORNO BLINDADO (Sem Nulls)
   return {
     shopId: shop.id,
     plan: {
-      isActive,
-      isPro,
-      isTrial,
-      isExpired,
-      endDate,
-      daysRemaining,
+      isActive, // É boolean puro
+      isPro, // É boolean puro
+      isTrial, // É boolean puro
+      isExpired, // É boolean puro
+      endDate, // É Date puro
+      daysRemaining, // É number puro
     },
   }
 }

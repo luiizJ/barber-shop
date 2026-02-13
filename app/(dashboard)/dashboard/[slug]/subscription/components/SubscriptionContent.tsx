@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Card,
   CardContent,
@@ -20,13 +22,16 @@ interface SubscriptionContentProps {
     isPro: boolean
     isTrial: boolean
     isExpired: boolean
-    endDate: Date
+    endDate: Date | string
     daysRemaining: number
   }
 }
 
 export function SubscriptionContent({ plan }: SubscriptionContentProps) {
   const { isActive, isPro, isTrial, isExpired, endDate, daysRemaining } = plan
+
+  // ⚠️ SEGURANÇA DE DATA: Garante que é um objeto Date, mesmo se vier string do servidor
+  const validEndDate = new Date(endDate)
 
   return (
     <div className="space-y-6">
@@ -64,7 +69,7 @@ export function SubscriptionContent({ plan }: SubscriptionContentProps) {
                 {isTrial && (
                   <Badge
                     variant="secondary"
-                    className="bg-yellow-500/20 text-yellow-600"
+                    className="bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30"
                   >
                     Período de Teste
                   </Badge>
@@ -81,8 +86,8 @@ export function SubscriptionContent({ plan }: SubscriptionContentProps) {
                   : isTrial
                     ? `Você tem ${daysRemaining} dias restantes de teste gratuito.`
                     : `Sua assinatura renova automaticamente em ${
-                        endDate.getFullYear() > 2000
-                          ? format(endDate, "dd 'de' MMMM 'de' yyyy", {
+                        validEndDate.getFullYear() > 2000
+                          ? format(validEndDate, "dd 'de' MMMM 'de' yyyy", {
                               locale: ptBR,
                             })
                           : "Breve"
@@ -96,7 +101,7 @@ export function SubscriptionContent({ plan }: SubscriptionContentProps) {
 
       {/* GRADE DE PLANOS */}
       <div className="grid gap-8 md:grid-cols-2 lg:max-w-4xl">
-        {/* PLANO START */}
+        {/* === PLANO START === */}
         <Card
           className={`flex flex-col ${
             !isPro ? "border-primary shadow-md" : "opacity-75"
@@ -135,19 +140,19 @@ export function SubscriptionContent({ plan }: SubscriptionContentProps) {
               plan="START"
               variant={!isPro ? "secondary" : "outline"}
               isCurrent={!isPro && !isExpired}
-              disabled={isPro}
+              disabled={isPro} // Se for PRO, não pode comprar Start
               text={
                 !isPro && !isExpired
                   ? "Plano Atual"
                   : isPro
                     ? "Plano Inferior"
-                    : "Assinar Start"
+                    : "Reativar Start"
               }
             />
           </CardFooter>
         </Card>
 
-        {/* PLANO PRO */}
+        {/* === PLANO PRO === */}
         <Card
           className={`flex flex-col ${
             isPro
@@ -158,7 +163,7 @@ export function SubscriptionContent({ plan }: SubscriptionContentProps) {
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-xl">
               Plano Pro
-              <Badge className="border-none bg-linear-to-r from-yellow-400 to-orange-500 text-black">
+              <Badge className="border-none bg-linear-to-r from-yellow-400 to-orange-500 font-bold text-black">
                 RECOMENDADO
               </Badge>
             </CardTitle>
@@ -193,7 +198,9 @@ export function SubscriptionContent({ plan }: SubscriptionContentProps) {
             <BuyButton
               plan="PRO"
               variant="default"
+              // Se é PRO e está Ativo, é o atual.
               isCurrent={isPro && isActive}
+              // Se é PRO e está Ativo, desabilita. Se expirou, habilita para renovar.
               disabled={isPro && isActive}
               text={
                 isPro && isActive

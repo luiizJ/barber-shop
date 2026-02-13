@@ -36,6 +36,7 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
       plan: true,
       stripeCustomerId: true,
       stripeSubscriptionStatus: true,
+      subscriptionEndsAt: true,
     },
   })
 
@@ -43,7 +44,15 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
     return redirect("/dashboard")
   }
 
-  if (shop.plan === plan && shop.stripeSubscriptionStatus) {
+  //
+  // Só bloqueia se for o mesmo plano, estiver ativo E a data for FUTURA.
+  const hasActivePlan =
+    shop.plan === plan &&
+    shop.stripeSubscriptionStatus === true &&
+    shop.subscriptionEndsAt &&
+    new Date(shop.subscriptionEndsAt) > new Date()
+
+  if (hasActivePlan) {
     return redirect("/dashboard?error=already_subscribed")
   }
 

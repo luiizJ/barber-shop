@@ -11,7 +11,7 @@ import {
   Settings,
   ChevronsUpDown,
   Store,
-  LayoutDashboard, // 👈 Importado novo ícone
+  LayoutDashboard,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -32,7 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu"
-import { Separator } from "@/app/components/ui/separator" // 👈 Importado Separator (opcional, se não tiver use div border)
+import { Separator } from "@/app/components/ui/separator"
 
 interface SidebarProps {
   shops: {
@@ -46,7 +46,7 @@ interface SidebarProps {
 
 export function Sidebar({ shops, currentShop }: SidebarProps) {
   const pathname = usePathname()
-  // Esconde o menu mobile em páginas de settings se preferir, ou mantém.
+
   const isSettingsPage =
     pathname.includes("/settings") || pathname.includes("/subscription")
 
@@ -159,7 +159,7 @@ function SidebarContent({ shops, currentShop }: SidebarProps) {
 
       {/* 2. ÁREA DE LINKS */}
       <div className="flex-1 space-y-1 px-3 py-4">
-        {/* 👇 NOVO: BOTÃO VISÃO GERAL (HOLDING) */}
+        {/* BOTÃO VISÃO GERAL (HOLDING) */}
         <Button
           variant={isRootDashboard ? "secondary" : "ghost"}
           className="mb-2 w-full justify-start gap-2"

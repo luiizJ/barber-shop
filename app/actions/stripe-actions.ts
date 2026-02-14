@@ -69,6 +69,7 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
     mode: "subscription",
     payment_method_types: ["card"],
     line_items: [{ price: priceId, quantity: 1 }],
+    allow_promotion_codes: true,
     metadata: {
       shopId: shop.id,
       userId: session.user.id,

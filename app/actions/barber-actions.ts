@@ -139,51 +139,56 @@ export async function deleteService(serviceId: string) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return { error: "Não autorizado" }
 
-  // 1. Buscamos o serviço e pedimos os dados da loja (barberShop) junto
-  const service = await db.barberServices.findUnique({
-    where: { id: serviceId },
-    select: {
-      id: true,
-      barberShop: {
-        select: { ownerId: true },
-      },
-      _count: {
-        select: { bookings: true },
-      },
-    },
-  })
-
-  if (!service) return { error: "Serviço não encontrado." }
-
-  // 2. SEGURANÇA TOTAL:
-  // Verificamos se o dono da loja desse serviço é O MESMO cara que está logado.
-  // Isso impede que o 'meuovodecodorna' apague serviço do 'vizinho@gmail.com'.
-  // 2.1. Sou eu mesmo (dono de 1, 2 ou 10 lojas)?
-  const isOwner = service.barberShop.ownerId === session.user.id
-  // 2.2. Ou sou o ADMIN da plataforma (Suporte)?
-  const isAdmin = session.user.role === "ADMIN"
-  // Se não for nem um nem outro, BLOQUEIA.
-  if (!isOwner && !isAdmin) {
-    return { error: "Ei! Esse serviço não é seu." }
-  }
-  // 3. VALIDAÇÃO DE NEGÓCIO: Se o contador for maior que zero, nem tenta o delete
-  if (service._count.bookings > 0) {
-    return {
-      error: "Não é possível excluir este serviço.",
-      description: `Existem ${service._count.bookings} agendamentos vinculados a ele. Cancele-os primeiro.`,
-    }
-  }
-  // 3. DELETAR: Agora podemos deletar só pelo ID, sem medo
   try {
-    await db.barberServices.delete({
-      where: { id: serviceId }, // Removemos direto pelo ID único
+    // 1. Validação de segurança (Dono/Admin)
+    const service = await db.barberServices.findUnique({
+      where: { id: serviceId },
+      select: {
+        barberShop: { select: { ownerId: true } },
+      },
     })
+
+    if (!service) return { error: "Serviço não encontrado." }
+
+    const isOwner = service.barberShop.ownerId === (session.user as any).id
+    const isAdmin = (session.user as any).role === "ADMIN"
+    if (!isOwner && !isAdmin) return { error: "Não autorizado." }
+
+    // 2. Trava de Segurança: Não deixa apagar se houver agendamento CONFIRMADO (futuro)
+    // Isso evita apagar um serviço que tem um cliente esperando hoje ou amanhã.
+    const activeBookings = await db.booking.count({
+      where: {
+        serviceId,
+        status: "CONFIRMED",
+      },
+    })
+
+    if (activeBookings > 0) {
+      return {
+        error: "Este serviço possui agendamentos ativos!",
+        description:
+          "Cancele os agendamentos confirmados antes de excluir o serviço definitivamente.",
+      }
+    }
+
+    // 3. EXCLUSÃO TOTAL (Cascata Manual)
+    // Usamos uma transação para garantir que ou apaga tudo ou não apaga nada
+    await db.$transaction([
+      // Passo A: Apaga TODOS os agendamentos vinculados (Cancelados, Finalizados, etc)
+      db.booking.deleteMany({
+        where: { serviceId },
+      }),
+      // Passo B: Agora que não existe mais nenhum vínculo no banco, apaga o serviço
+      db.barberServices.delete({
+        where: { id: serviceId },
+      }),
+    ])
 
     revalidatePath("/dashboard")
     return { success: true }
   } catch (error) {
-    console.error(error)
-    return { error: "Erro ao excluir." }
+    console.error("ERRO_DELETE_SERVICE:", error)
+    return { error: "Erro ao excluir o serviço e seu histórico." }
   }
 }
 

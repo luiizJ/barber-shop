@@ -45,7 +45,7 @@ async function main() {
       imageUrl:
         "https://utfs.io/f/5832df58-cfd7-4b3f-b102-42b7e150ced2-16r.png",
       slug: "vintage-barber",
-      stripeSubscriptionStatus: "active",
+      stripeSubscriptionStatus: true,
       subscriptionEndsAt: new Date(
         new Date().setFullYear(new Date().getFullYear() + 1),
       ),
@@ -146,7 +146,7 @@ async function main() {
         description: extra.description,
         imageUrl: extra.imageUrl,
         slug: extra.slug,
-        stripeSubscriptionStatus: "active",
+        stripeSubscriptionStatus: true,
         ownerId: donoUser.id, // Mesmo dono para facilitar
       },
     })

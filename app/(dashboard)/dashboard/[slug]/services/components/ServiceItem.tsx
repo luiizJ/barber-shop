@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardFooter } from "@/app/components/ui/card"
 import { Button } from "@/app/components/ui/button"
-import { Trash2 } from "lucide-react"
+import { Trash2, XCircle } from "lucide-react"
 import { toast } from "sonner"
 import Image from "next/image"
 import { deleteService } from "@/app/actions/barber-actions"
@@ -98,24 +98,45 @@ const ServiceItem = ({ service }: ServiceItemProps) => {
               <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent className="w-[90%] rounded-2xl">
+
+          <AlertDialogContent className="w-[90%] rounded-2xl border-red-900/50">
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir serviço?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta ação não pode ser desfeita. O serviço{" "}
-                <strong>{service.name}</strong> será removido permanentemente.
+              <AlertDialogTitle className="text-red-500">
+                Excluir permanentemente?
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-4">
+                  <p className="text-muted-foreground text-sm">
+                    Esta ação não pode ser desfeita. O serviço{" "}
+                    <strong>{service.name}</strong>
+                    será removido do banco de dados.
+                  </p>
+
+                  {/* AVISO DE HISTÓRICO */}
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
+                    <p className="mb-1 flex items-center gap-2 font-bold uppercase">
+                      <XCircle className="h-3 w-3" /> Atenção ao histórico
+                    </p>
+                    <p>
+                      Ao excluir, <strong>todos os agendamentos antigos</strong>{" "}
+                      (finalizados ou cancelados) deste serviço também serão
+                      apagados. Isso afetará seus relatórios financeiros.
+                    </p>
+                  </div>
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
+
             <AlertDialogFooter className="flex flex-col gap-3 pt-4 sm:flex-col">
               <AlertDialogAction
                 onClick={handleDelete}
                 className="w-full rounded-xl bg-red-600 py-6 font-bold text-white hover:bg-red-700"
               >
-                Excluir
+                Sim, excluir tudo
               </AlertDialogAction>
 
               <AlertDialogCancel className="bg-secondary hover:bg-secondary/80 mt-0 w-full rounded-xl border-none py-6 font-bold">
-                Cancelar
+                Cancelar e manter
               </AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>

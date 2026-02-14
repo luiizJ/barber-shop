@@ -170,6 +170,7 @@ model BarberServices {
 
   barberShopId String
   barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
+  isHidden    Boolean  @default(false)
 
   bookings Booking[]
 }

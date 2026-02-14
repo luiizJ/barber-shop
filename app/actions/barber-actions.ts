@@ -131,7 +131,7 @@ export async function upsertService(formData: FormData) {
   })
 
   // Revalidar caminhos
-  revalidatePath("/dashboard/[slug]/services") // Ajustado para rota dinâmica
+  revalidatePath("/dashboard/[slug]/services")
   revalidatePath("/dashboard")
 }
 // --- 3. AÇÃO DE DELETAR SERVIÇO ---
@@ -146,6 +146,9 @@ export async function deleteService(serviceId: string) {
       id: true,
       barberShop: {
         select: { ownerId: true },
+      },
+      _count: {
+        select: { bookings: true },
       },
     },
   })
@@ -163,7 +166,13 @@ export async function deleteService(serviceId: string) {
   if (!isOwner && !isAdmin) {
     return { error: "Ei! Esse serviço não é seu." }
   }
-
+  // 3. VALIDAÇÃO DE NEGÓCIO: Se o contador for maior que zero, nem tenta o delete
+  if (service._count.bookings > 0) {
+    return {
+      error: "Não é possível excluir este serviço.",
+      description: `Existem ${service._count.bookings} agendamentos vinculados a ele. Cancele-os primeiro.`,
+    }
+  }
   // 3. DELETAR: Agora podemos deletar só pelo ID, sem medo
   try {
     await db.barberServices.delete({

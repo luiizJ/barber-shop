@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/app/components/ui/button"
-import { AlertTriangle, Lock } from "lucide-react"
+import { Lock } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 

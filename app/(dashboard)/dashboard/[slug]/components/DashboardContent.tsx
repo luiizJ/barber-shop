@@ -18,7 +18,6 @@ import Link from "next/link"
 import { BookingItem } from "./BookingItem"
 import { TrialWarning } from "./TrialWarning"
 import { NewBranchButton } from "./NewBranchButton"
-import { Prisma } from "@prisma/client"
 
 // Tipagem segura para os dados que vêm da Action
 interface DashboardContentProps {
@@ -37,13 +36,13 @@ interface DashboardContentProps {
       isPro: boolean
     }
   }
+  slug: string
 }
 
 export function DashboardContent({
   userName,
   data,
-  allShops,
-  currentShop,
+  slug,
 }: DashboardContentProps) {
   const { barberShop, metrics, access } = data
 
@@ -107,7 +106,7 @@ export function DashboardContent({
             className="w-full font-bold text-blue-700 md:w-auto"
             asChild
           >
-            <Link href="/dashboard/subscription">Fazer Upgrade</Link>
+            <Link href={`/dashboard/${slug}/subscription`}>Fazer Upgrade</Link>
           </Button>
         </div>
       )}

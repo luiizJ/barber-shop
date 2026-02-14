@@ -21,6 +21,7 @@ export default async function BarberDashboard({
 
   return (
     <DashboardContent
+      slug={slug}
       userName={session.user.name || "Barbeiro"}
       data={data}
       allShops={data.allShops}

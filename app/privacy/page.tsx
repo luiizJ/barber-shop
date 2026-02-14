@@ -39,7 +39,7 @@ export default function PrivacyPage() {
           </h2>
           <p>
             Seus dados são usados exclusivamente para gerenciar seus
-            agendamentos e sua assinatura. O Agdly Flow **nunca venderá seus
+            agendamentos e sua assinatura. O AgdlyFlow **nunca venderá seus
             dados** para terceiros.
           </p>
         </section>
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
         <section className="border-t pt-8 text-sm">
           <p>
             Contato para questões de privacidade:{" "}
-            <span className="text-primary">suporte@agdlyflow.com</span>
+            <span className="text-primary">lznv.dev@gmail.com</span>
           </p>
         </section>
       </div>

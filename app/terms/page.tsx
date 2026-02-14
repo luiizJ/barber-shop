@@ -1,12 +1,10 @@
-import { Card, CardContent } from "@/app/components/ui/card"
-
 export default function TermsPage() {
   return (
     <div className="container mx-auto max-w-4xl px-6 py-12">
       <h1 className="mb-8 text-3xl font-extrabold tracking-tighter italic">
         Termos de Uso{" "}
         <span className="text-primary text-sm font-normal not-italic">
-          — Agdly Flow
+          — AgdlyFlow
         </span>
       </h1>
 
@@ -16,7 +14,7 @@ export default function TermsPage() {
             1. Objeto do Serviço
           </h2>
           <p>
-            O <strong>Agdly Flow</strong> é uma plataforma de tecnologia que
+            O <strong>AgdlyFlow</strong> é uma plataforma de tecnologia que
             facilita o agendamento de serviços e a gestão de barbearias. Nós
             **não prestamos serviços de barbearia**. A responsabilidade pela
             execução do serviço, qualidade e atendimento é exclusiva do
@@ -29,11 +27,11 @@ export default function TermsPage() {
             2. Assinaturas e Pagamentos
           </h2>
           <p>
-            As assinaturas do plano PRO são processadas via{" "}
-            <strong>Stripe</strong>. Ao assinar, você concorda com a renovação
-            automática. O cancelamento pode ser feito a qualquer momento pelo
-            painel, interrompendo a cobrança do próximo ciclo. Não oferecemos
-            reembolso por períodos de assinatura já utilizados.
+            As assinaturas dos plano são processadas via <strong>Stripe</strong>
+            . Ao assinar, você concorda com a renovação automática. O
+            cancelamento pode ser feito a qualquer momento pelo painel,
+            interrompendo a cobrança do próximo ciclo. Não oferecemos reembolso
+            por períodos de assinatura já utilizados.
           </p>
         </section>
 

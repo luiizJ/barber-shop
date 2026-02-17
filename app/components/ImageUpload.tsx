@@ -4,6 +4,7 @@ import { UploadButton } from "@/app/lib/uploadthing"
 import { X } from "lucide-react"
 import Image from "next/image"
 import { Button } from "./ui/button"
+import { toast } from "sonner"
 
 interface ImageUploadProps {
   value: string // A URL da imagem
@@ -34,11 +35,12 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
       <UploadButton
         endpoint="imageUploader"
         onClientUploadComplete={(res) => {
+          const newUrl = res[0].ufsUrl
           // Quando termina, pega a URL e manda pro pai
-          onChange(res[0].url)
+          onChange(newUrl)
         }}
         onUploadError={(error: Error) => {
-          alert(`ERRO: ${error.message}`)
+          toast.error(`ERRO: ${error.message}`)
         }}
         appearance={{
           button:

@@ -55,12 +55,13 @@ export function ShopImageUpload({ defaultImage }: ShopImageUploadProps) {
             button({ ready }) {
               return ready ? "Alterar Capa" : "Carregando..."
             },
-            allowedContent: "Máx. 2MB (JPG, PNG)",
+            allowedContent: "Máx. 4MB (JPG, PNG)",
           }}
           onClientUploadComplete={(res) => {
+            const newUrl = res[0].ufsUrl
             // Atualiza o estado com a URL nova
-            setImageUrl(res[0].url)
-            console.log("Upload concluído:", res[0].url)
+            setImageUrl(newUrl)
+            console.log("Upload concluído:", newUrl)
           }}
           onUploadError={(error: Error) => {
             alert(`ERRO: ${error.message}`)

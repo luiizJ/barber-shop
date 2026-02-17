@@ -13,12 +13,12 @@ const auth = async () => {
 
 export const ourFileRouter = {
   // Rota para Imagem da Barbearia e Serviços
-  imageUploader: f({ image: { maxFileSize: "2MB", maxFileCount: 1 } })
+  imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
     .middleware(async () => await auth())
     .onUploadComplete(async ({ metadata, file }) => {
       console.log("Upload feito por:", metadata.userId)
-      console.log("URL do arquivo:", file.url)
-      return { uploadedBy: metadata.userId }
+      console.log("URL do arquivo:", file.ufsUrl)
+      return { uploadedBy: metadata.userId, url: file.ufsUrl }
     }),
 } satisfies FileRouter
 

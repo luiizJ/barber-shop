@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "ufs.sh",
+      },
+      {
+        protocol: "https",
+        hostname: "*.ufs.sh",
+      },
+      {
+        protocol: "https",
         hostname: "images.unsplash.com",
       },
       {
@@ -31,15 +39,15 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "X-Frame-Options",
-            value: "DENY", // evita Clickjacking
+            value: "DENY",
           },
           {
             key: "X-Content-Type-Options",
-            value: "nosniff", // Impede o navegador de "adivinhar" tipos de arquivo (evita XSS)
+            value: "nosniff",
           },
           {
             key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin", // Protege dados de referência
+            value: "strict-origin-when-cross-origin",
           },
         ],
       },

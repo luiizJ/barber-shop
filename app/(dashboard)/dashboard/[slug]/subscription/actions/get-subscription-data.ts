@@ -6,44 +6,43 @@ import { differenceInDays } from "date-fns"
 export async function getSubscriptionData(userId: string) {
   const shop = await db.barberShop.findFirst({
     where: { ownerId: userId },
+    include: {
+      owner: true,
+    },
   })
 
-  if (!shop) return null
+  if (!shop || !shop.owner) return null
 
   const now = new Date()
 
-  // 1. Status Base (Forçamos boolean com o '!!' e checagem de data)
-  const isActive =
-    !!shop.stripeSubscriptionStatus && // Garante que não é null
-    !!shop.subscriptionEndsAt && // Garante que existe data
-    shop.subscriptionEndsAt > now
+  // 1. O status do Stripe é a "Verdade Única" para ser PRO
+  const isPro = shop.owner.stripeSubscriptionStatus === "active"
 
-  // 2. Cálculo do Trial
-  const isTrial = !isActive && !!shop.trialEndsAt && shop.trialEndsAt > now
+  // 2. Ele está ativo se for PRO (independente da data) OU se estiver no Trial
+  const isActive = isPro || (!!shop.trialEndsAt && shop.trialEndsAt > now)
 
-  // 3. Expirado?
-  const isExpired = !isActive && !isTrial
+  // 3. TRIAL SÓ EXISTE SE NÃO FOR PRO
+  // Isso mata o banner amarelo no momento que o cara vira PRO
+  const isTrial = !isPro && !!shop.trialEndsAt && shop.trialEndsAt > now
 
-  // 4. É PRO?
-  const isPro = shop.plan === "PRO"
+  // Se ele é PRO ou se está no Trial, ele está ATIVO.
 
-  // 5. Data Final (Fallback para agora se for nulo)
-  const endDate = isActive
+  // 4. Determina a data de expiração para o cálculo de dias restantes
+  const endDate = isPro
     ? (shop.subscriptionEndsAt ?? now)
     : (shop.trialEndsAt ?? now)
 
   const daysRemaining = differenceInDays(endDate, now)
 
-  // 👇 RETORNO BLINDADO (Sem Nulls)
   return {
     shopId: shop.id,
     plan: {
-      isActive, // É boolean puro
-      isPro, // É boolean puro
-      isTrial, // É boolean puro
-      isExpired, // É boolean puro
-      endDate, // É Date puro
-      daysRemaining, // É number puro
+      isActive, // ✅ Nome mantido! O Front nem vai perceber a mudança.
+      isPro,
+      isTrial,
+      isExpired: !isActive,
+      endDate,
+      daysRemaining: daysRemaining < 0 ? 0 : daysRemaining,
     },
   }
 }

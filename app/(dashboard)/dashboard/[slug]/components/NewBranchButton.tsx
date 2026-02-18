@@ -49,5 +49,5 @@ export function NewBranchButton({
 
   // Se não estiver bloqueado, mostra o Modal de criação normal
   // O botão de "Criar" já está dentro desse componente
-  return <CreateShopDialog />
+  return <CreateShopDialog shopCount={userShopsCount} isPro={isPro} />
 }

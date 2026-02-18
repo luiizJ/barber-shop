@@ -16,70 +16,82 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
-import { Loader2, PlusCircle } from "lucide-react" // Troquei Scissors por PlusCircle pra padronizar
+import { Loader2, PlusCircle, Crown } from "lucide-react"
 import { toast } from "sonner"
 import { ImageUpload } from "@/app/components/ImageUpload"
 import { Textarea } from "@/app/components/ui/textarea"
 import { createBarbershop } from "@/app/actions/barber-actions"
 import { useSession } from "next-auth/react"
 
-// 1. Schema de Validação
+// 1. DEFINIÇÃO DO SCHEMA (Isso resolve o erro ts(2304))
 const formSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
   address: z.string().min(5, "Endereço obrigatório"),
   phone: z.string().min(10, "Telefone inválido"),
   description: z.string().min(10, "Descrição muito curta (min 10 letras)"),
-  imageUrl: z.string().optional(),
+  imageUrl: z.string().min(1, "A imagem da fachada é obrigatória"),
 })
 
 type FormValues = z.infer<typeof formSchema>
 
-export function CreateShopDialog() {
+interface CreateShopDialogProps {
+  shopCount: number
+  isPro: boolean
+}
+
+export function CreateShopDialog({ shopCount, isPro }: CreateShopDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
   const { update } = useSession()
 
-  // 2. Configuração do Formulário
+  // 2. LÓGICA DE BLOQUEIO PRO
+  const isLimitReached = !isPro && shopCount >= 1
+
   const {
     register,
     handleSubmit,
-    setValue, // Para atualizar o ImageUpload manualmente
-    watch, // Para ver o valor atual da imagem
+    setValue,
+    watch,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      address: "",
+      phone: "",
+      description: "",
+      imageUrl: "",
+    },
   })
 
-  // Observa o valor da imagem para passar pro componente ImageUpload
   const imageUrl = watch("imageUrl")
 
-  // 3. Função de Envio
   const onSubmit = async (data: FormValues) => {
+    if (isLimitReached) {
+      toast.error("Limite atingido", {
+        description: "Assine o plano PRO para gerenciar múltiplas unidades.",
+      })
+      return
+    }
+
     try {
       const formData = new FormData()
       formData.append("name", data.name)
       formData.append("address", data.address)
       formData.append("phone", data.phone)
       formData.append("description", data.description)
-      if (data.imageUrl) formData.append("imageUrl", data.imageUrl)
+      formData.append("imageUrl", data.imageUrl)
 
-      // Chama o Server Action
       const result = await createBarbershop(formData)
 
-      // ❌ Erro do Servidor (ex: Limite atingido)
       if (result?.error) {
-        toast.error("Não foi possível criar", {
-          description: result.error,
-        })
+        toast.error(result.error)
         return
       }
 
-      // ✅ Sucesso
       if (result?.success) {
-        toast.success("Barbearia criada com sucesso!", {
-          description: "Bem-vindo ao time! Vamos configurar seus serviços.",
-        })
+        toast.success("Barbearia criada com sucesso!")
         await update()
         setIsOpen(false)
         reset()
@@ -88,11 +100,23 @@ export function CreateShopDialog() {
       }
     } catch (error) {
       console.error(error)
-      toast.error("Erro inesperado. Tente novamente.")
+      toast.error("Erro inesperado ao criar barbearia.")
     }
   }
 
   const handleOpenChange = (open: boolean) => {
+    // Intercepta a abertura para fazer marketing do PRO
+    if (isLimitReached && open) {
+      toast("🚀 Evolua para o Plano PRO!", {
+        description:
+          "Você atingiu o limite de 1 unidade gratuita. Desbloqueie filiais ilimitadas agora.",
+        action: {
+          label: "Ver Planos",
+          onClick: () => router.push("/dashboard/billing"),
+        },
+      })
+      return
+    }
     if (!open) reset()
     setIsOpen(open)
   }
@@ -100,129 +124,110 @@ export function CreateShopDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        {/* Botão visualmente consistente */}
-        <Button variant="outline" className="gap-2">
-          <PlusCircle size={16} />
-          Nova Filial
+        <Button
+          variant={isLimitReached ? "secondary" : "default"}
+          className="w-full gap-2 sm:w-auto"
+        >
+          {isLimitReached ? (
+            <>
+              <Crown size={16} className="text-yellow-500" />
+              Upgrade para Multi-filiais
+            </>
+          ) : (
+            <>
+              <PlusCircle size={16} />
+              Nova Filial
+            </>
+          )}
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-[95%] rounded-2xl sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Vamos começar!</DialogTitle>
+          <DialogTitle>Nova Unidade</DialogTitle>
           <DialogDescription>
-            Insira os dados básicos do seu negócio. Você pode alterar tudo
-            depois.
+            Cadastre os detalhes da sua nova filial para começar os
+            agendamentos.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
-          {/* UPLOAD DE IMAGEM */}
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+          {/* IMAGEM */}
+          <div className="space-y-2">
             <Label>Logotipo / Fachada</Label>
             <ImageUpload
-              value={imageUrl || ""}
+              value={imageUrl}
               onChange={(url) => setValue("imageUrl", url)}
             />
+            {errors.imageUrl && (
+              <p className="text-xs text-red-500">{errors.imageUrl.message}</p>
+            )}
           </div>
 
           {/* NOME */}
-          <div className="grid gap-2">
-            <Label htmlFor="name" className={errors.name ? "text-red-500" : ""}>
-              Nome da Barbearia
-            </Label>
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome da Barbearia</Label>
             <Input
               id="name"
-              placeholder="Ex: Dom Bigode"
+              placeholder="Ex: Dom Bigode - Centro"
               {...register("name")}
-              className={
-                errors.name ? "border-red-500 focus-visible:ring-red-500" : ""
-              }
+              className={errors.name ? "border-red-500" : ""}
             />
             {errors.name && (
-              <span className="text-xs text-red-500">
-                {errors.name.message}
-              </span>
+              <p className="text-xs text-red-500">{errors.name.message}</p>
             )}
           </div>
 
-          {/* DESCRIÇÃO (TEXTAREA) */}
-          <div className="grid gap-2">
-            <Label
-              htmlFor="description"
-              className={errors.description ? "text-red-500" : ""}
-            >
-              Descrição
-            </Label>
+          {/* DESCRIÇÃO */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
             <Textarea
               id="description"
-              placeholder="Conte um pouco sobre sua barbearia..."
+              placeholder="Conte um pouco sobre esta unidade..."
               {...register("description")}
-              className={`resize-none ${errors.description ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+              className={errors.description ? "border-red-500" : ""}
             />
             {errors.description && (
-              <span className="text-xs text-red-500">
+              <p className="text-xs text-red-500">
                 {errors.description.message}
-              </span>
+              </p>
             )}
           </div>
 
-          {/* ENDEREÇO */}
-          <div className="grid gap-2">
-            <Label
-              htmlFor="address"
-              className={errors.address ? "text-red-500" : ""}
-            >
-              Endereço
-            </Label>
-            <Input
-              id="address"
-              placeholder="Rua das Tesouras, 123"
-              {...register("address")}
-              className={
-                errors.address
-                  ? "border-red-500 focus-visible:ring-red-500"
-                  : ""
-              }
-            />
-            {errors.address && (
-              <span className="text-xs text-red-500">
-                {errors.address.message}
-              </span>
-            )}
+          {/* ENDEREÇO E TELEFONE EM GRID NO DESKTOP */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="address">Endereço</Label>
+              <Input
+                id="address"
+                placeholder="Rua, Número, Bairro"
+                {...register("address")}
+                className={errors.address ? "border-red-500" : ""}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">WhatsApp</Label>
+              <Input
+                id="phone"
+                placeholder="(00) 00000-0000"
+                {...register("phone")}
+                className={errors.phone ? "border-red-500" : ""}
+              />
+            </div>
           </div>
 
-          {/* TELEFONE */}
-          <div className="grid gap-2">
-            <Label
-              htmlFor="phone"
-              className={errors.phone ? "text-red-500" : ""}
-            >
-              Telefone / WhatsApp
-            </Label>
-            <Input
-              id="phone"
-              placeholder="(00) 00000-0000"
-              {...register("phone")}
-              className={
-                errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""
-              }
-            />
-            {errors.phone && (
-              <span className="text-xs text-red-500">
-                {errors.phone.message}
-              </span>
-            )}
-          </div>
-
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-6 text-base font-bold"
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Criando...
               </>
             ) : (
-              "Lançar Barbearia 🚀"
+              "Lançar Unidade 🚀"
             )}
           </Button>
         </form>

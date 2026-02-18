@@ -14,41 +14,32 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
     return redirect("/")
   }
 
-  if (plan !== "START" && plan !== "PRO") {
-    throw new Error("Plano inválido")
-  }
-
-  //  FIX: Define a URL Base de forma robusta
-  // 1. Tenta pegar a variável pública
-  // 2. Se não tiver, pega a do NextAuth (que você já tem)
-  // 3. Fallback para localhost (segurança para dev)
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXTAUTH_URL ||
     "http://localhost:3000"
 
-  const shop = await db.barberShop.findFirst({
-    where: {
-      ownerId: session.user.id,
-    },
-    select: {
-      id: true,
-      plan: true,
-      stripeCustomerId: true,
-      stripeSubscriptionStatus: true,
-      subscriptionEndsAt: true,
+  // 1. Buscamos o USUÁRIO (onde estão os dados do Stripe) e sua primeira loja
+  const user = await db.user.findUnique({
+    where: { id: (session.user as any).id },
+    include: {
+      ownedBarbershops: {
+        take: 1,
+        select: { id: true, subscriptionEndsAt: true, plan: true },
+      },
     },
   })
 
-  if (!shop) {
+  if (!user || user.ownedBarbershops.length === 0) {
     return redirect("/dashboard")
   }
 
-  //
-  // Só bloqueia se for o mesmo plano, estiver ativo E a data for FUTURA.
+  const shop = user.ownedBarbershops[0]
+
+  // 2. Lógica de Assinatura Ativa
   const hasActivePlan =
     shop.plan === plan &&
-    shop.stripeSubscriptionStatus === true &&
+    user.stripeSubscriptionStatus === "active" &&
     shop.subscriptionEndsAt &&
     new Date(shop.subscriptionEndsAt) > new Date()
 
@@ -72,18 +63,17 @@ export async function createCheckoutSession(plan: "START" | "PRO") {
     allow_promotion_codes: true,
     metadata: {
       shopId: shop.id,
-      userId: session.user.id,
+      userId: user.id,
       planChoice: plan,
     },
-    // 👇 FIX: Agora usa a variável 'appUrl' que garantimos que existe
     success_url: `${appUrl}/dashboard?success=true`,
-    cancel_url: `${appUrl}/dashboard/subscription?canceled=true`, // Mudei para voltar pra tela de assinatura
+    cancel_url: `${appUrl}/dashboard/subscription?canceled=true`,
   }
 
-  if (shop.stripeCustomerId) {
-    sessionConfig.customer = shop.stripeCustomerId
+  if (user.stripeCustomerId) {
+    sessionConfig.customer = user.stripeCustomerId
   } else {
-    sessionConfig.customer_email = session.user.email
+    sessionConfig.customer_email = user.email!
   }
 
   const checkoutSession = await stripe.checkout.sessions.create(sessionConfig)

@@ -199,28 +199,32 @@ export async function createBarbershop(formData: FormData) {
   if (!session?.user) return { error: "Faça login primeiro.", success: false }
 
   // 🔍 BUSCA DIRETA NO BANCO: Evita erro de sessão desatualizada
+  // 1. BUSCA O USUÁRIO + PRIMEIRA LOJA (Para herdar a data)
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { role: true },
-  })
-  // 2. Verifica se ele tem alguma barbearia com plano PRO ativo
-  const hasProShop = await db.barberShop.findFirst({
-    where: {
-      ownerId: session.user.id,
-      plan: "PRO", // Ou "PREMIUM", verifique como está no seu banco
+    include: {
+      ownedBarbershops: {
+        take: 1,
+        orderBy: { createdAt: "asc" }, // Pegamos a loja mais antiga como referência
+      },
     },
   })
+  // 2. Verifica se ele tem alguma barbearia com plano PRO ativo
+
   const userShopsCount = await db.barberShop.count({
     where: { ownerId: session.user.id },
   })
+  const status = user?.stripeSubscriptionStatus?.trim().toLowerCase()
 
-  const isPro = user?.role === "ADMIN" || !!hasProShop
+  const isPro = user?.role === "ADMIN" || status === "active"
   const limit = isPro ? 5 : 1
 
   if (userShopsCount >= limit) {
-    console.log("❌ Bloqueado pelo limite de lojas.")
+    console.log(
+      `❌ Bloqueado: User é ${isPro ? "PRO" : "START"}. Lojas: ${userShopsCount}/${limit}`,
+    )
     return {
-      error: `Limite atingido! Você já tem ${userShopsCount} lojas. O limite é ${limit}.`,
+      error: `Limite atingido! No plano ${isPro ? "PRO" : "Gratuito"}, o limite é ${limit}.`,
       success: false,
     }
   }
@@ -268,6 +272,13 @@ export async function createBarbershop(formData: FormData) {
   // 2. TRANSAÇÃO
   try {
     await db.$transaction(async (tx) => {
+      // 2. DEFINIÇÃO DA HERANÇA
+      // Se ele é PRO, a nova loja herda a validade da primeira loja.
+      // Se não é PRO, ela ganha os 15 dias de teste.
+      const primaryShop = user?.ownedBarbershops[0]
+      const planToSet = isPro ? "PRO" : "START"
+      const subscriptionDate = isPro ? primaryShop?.subscriptionEndsAt : null
+      const trialDate = isPro ? null : addDays(new Date(), 15)
       // A. Cria a Barbearia
       const shop = await tx.barberShop.create({
         data: {
@@ -280,9 +291,9 @@ export async function createBarbershop(formData: FormData) {
             data.imageUrl ||
             "https://utfs.io/f/5832df58-cfd7-4b3f-b102-42b7e150ced2-16r.png",
           ownerId: session.user.id,
-          plan: "START",
-          stripeSubscriptionStatus: true,
-          trialEndsAt: addDays(new Date(), 15),
+          plan: planToSet,
+          subscriptionEndsAt: subscriptionDate,
+          trialEndsAt: trialDate,
         },
       })
       console.log("✅ Barbearia criada:", shop.id)

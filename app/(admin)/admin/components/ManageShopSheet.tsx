@@ -19,11 +19,11 @@ import {
   SelectValue,
 } from "@/app/components/ui/select"
 import { BarberShopPlan } from "@prisma/client"
-import { updateBarbershop, deleteBarbershop } from "@/app/actions/admin-actions" // 👈 Importe a nova action
+import { updateBarbershop, deleteBarbershop } from "@/app/actions/admin-actions"
 import { useState } from "react"
 import { Badge } from "@/app/components/ui/badge"
 import { toast } from "sonner"
-import { Trash2 } from "lucide-react" // 👈 Ícone de lixo
+import { Trash2, ShieldCheck, ShieldAlert } from "lucide-react"
 
 import {
   AlertDialog,
@@ -37,18 +37,27 @@ import {
   AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog"
 
+// 1. Interface Atualizada para o novo Schema
 interface ManageShopSheetProps {
   shop: {
     id: string
     name: string
     plan: BarberShopPlan
     subscriptionEndsAt: Date | null
-    stripeSubscriptionStatus: boolean | null
+    owner: {
+      stripeSubscriptionStatus: string | null // ✅ Agora no owner e como String
+    } | null
   }
 }
 
 export function ManageShopSheet({ shop }: ManageShopSheetProps) {
   const [isOpen, setIsOpen] = useState(false)
+
+  // 2. Lógica de Status (Verifica se é "active")
+  const isActive = shop.owner?.stripeSubscriptionStatus === "active"
+
+  // O valor que vai para o Select (mantendo compatibilidade com sua lógica de salvar)
+  const defaultStatusValue = shop.owner?.stripeSubscriptionStatus || "inactive"
 
   const handleSave = async (formData: FormData) => {
     try {
@@ -60,20 +69,17 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
     }
   }
 
-  // Função para deletar
   const handleDelete = async () => {
     try {
       const formData = new FormData()
       formData.append("shopId", shop.id)
       await deleteBarbershop(formData)
-      setIsOpen(false) // Fecha o Sheet
+      setIsOpen(false)
       toast.success("Barbearia deletada com sucesso!")
     } catch (error) {
       toast.error("Erro ao deletar barbearia.")
     }
   }
-
-  const defaultStatus = shop.stripeSubscriptionStatus ? "true" : "false"
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -83,44 +89,50 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
         </Badge>
       </SheetTrigger>
       <SheetContent className="overflow-y-auto">
-        {" "}
-        {/* Scroll se precisar */}
         <SheetHeader>
           <SheetTitle>Gerenciar: {shop.name}</SheetTitle>
           <SheetDescription>
-            Faça alterações manuais na assinatura e status.
+            Alterações manuais na assinatura do dono e status da unidade.
           </SheetDescription>
         </SheetHeader>
+
         <form action={handleSave} className="grid gap-4 py-4">
           <input type="hidden" name="shopId" value={shop.id} />
 
-          {/* ... (Seus campos de Status, Plano e Dias continuam IGUAIS aqui) ... */}
+          {/* STATUS DO ACESSO (Visual melhorado) */}
           <div
-            className={`grid gap-2 rounded-md border p-3 ${shop.stripeSubscriptionStatus ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}
+            className={`grid gap-2 rounded-md border p-3 ${
+              isActive
+                ? "border-green-200 bg-green-50"
+                : "border-red-200 bg-red-50"
+            }`}
           >
             <Label
               htmlFor="status"
-              className={
-                shop.stripeSubscriptionStatus
-                  ? "text-green-700"
-                  : "text-red-700"
-              }
+              className={`flex items-center gap-2 ${isActive ? "text-green-700" : "text-red-700"}`}
             >
-              Status do Acesso
+              {isActive ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
+              Status da Assinatura (Dono)
             </Label>
-            <Select name="status" defaultValue={defaultStatus}>
+
+            <Select name="status" defaultValue={defaultStatusValue}>
               <SelectTrigger className="bg-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="true">✅ Ativo (Liberado)</SelectItem>
-                <SelectItem value="false">🚫 Inativo (Bloqueado)</SelectItem>
+                <SelectItem value="active">✅ Ativo (Total)</SelectItem>
+                <SelectItem value="past_due">⏳ Pendente (Aviso)</SelectItem>
+                <SelectItem value="canceled">
+                  🚫 Cancelado (Bloqueio)
+                </SelectItem>
+                <SelectItem value="inactive">🌑 Inativo</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          {/* PLANO */}
           <div className="grid gap-2">
-            <Label htmlFor="plan">Plano Atual</Label>
+            <Label htmlFor="plan">Plano da Unidade</Label>
             <Select name="plan" defaultValue={shop.plan}>
               <SelectTrigger>
                 <SelectValue />
@@ -132,20 +144,21 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
             </Select>
           </div>
 
+          {/* VENCIMENTO */}
           <div className="grid gap-2">
-            <Label htmlFor="daysToAdd">Adicionar Dias (Cortesía)</Label>
+            <Label htmlFor="daysToAdd">Adicionar Dias de Cortesia</Label>
             <Input
               id="daysToAdd"
               name="daysToAdd"
               type="number"
-              placeholder="0"
+              placeholder="Ex: 30"
               defaultValue={0}
             />
-            <p className="text-muted-foreground text-xs">
-              Vence em:{" "}
+            <p className="text-muted-foreground text-xs italic">
+              Vencimento atual:{" "}
               {shop.subscriptionEndsAt
-                ? new Date(shop.subscriptionEndsAt).toLocaleDateString()
-                : "Sem data"}
+                ? new Date(shop.subscriptionEndsAt).toLocaleDateString("pt-BR")
+                : "Sem data definida"}
             </p>
           </div>
 
@@ -153,12 +166,12 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
             Salvar Alterações
           </Button>
         </form>
-        {/* 👇 ZONA DE PERIGO (DELETE) */}
+
+        {/* ZONA DE PERIGO */}
         <div className="mt-8 border-t pt-6">
           <h3 className="mb-2 text-sm font-bold text-red-600">
             Zona de Perigo
           </h3>
-
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="w-full gap-2">
@@ -169,10 +182,8 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
               <AlertDialogHeader>
                 <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Essa ação não pode ser desfeita. Isso excluirá permanentemente
-                  a barbearia
-                  <strong> {shop.name}</strong> e todos os seus agendamentos,
-                  serviços e dados.
+                  Essa ação excluirá permanentemente a unidade
+                  <strong> {shop.name}</strong> e todos os seus dados.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -181,7 +192,7 @@ export function ManageShopSheet({ shop }: ManageShopSheetProps) {
                   onClick={handleDelete}
                   className="bg-red-600 hover:bg-red-700"
                 >
-                  Sim, Excluir Definitivamente
+                  Sim, Excluir
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

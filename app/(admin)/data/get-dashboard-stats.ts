@@ -1,7 +1,7 @@
 import { db } from "@/app/lib/prisma"
 
 export async function getDashboardStats() {
-  // 1. Busca Dados
+  // 1. Busca Dados (Já está correto com o include)
   const allBarbershops = await db.barberShop.findMany({
     include: {
       owner: true,
@@ -14,23 +14,28 @@ export async function getDashboardStats() {
     },
   })
 
-  // 2. Cálculos de Negócio
+  // 2. Cálculos de Negócio Refatorados
   const totalShops = allBarbershops.length
 
+  // ✅ Agora acessamos via shop.owner e comparamos com "active"
   const activeSubs = allBarbershops.filter(
-    (shop) => shop.stripeSubscriptionStatus === true,
+    (shop) => shop.owner?.stripeSubscriptionStatus === "active",
   ).length
 
   const inactiveSubs = totalShops - activeSubs
 
+  // ✅ Cálculo do MRR (Mensalidade recorrente)
   const mrr = allBarbershops.reduce((acc, shop) => {
-    if (shop.plan === "PRO" && shop.stripeSubscriptionStatus === true) {
+    // Verificamos se o plano é PRO e se a assinatura do dono está ativa
+    if (
+      shop.plan === "PRO" &&
+      shop.owner?.stripeSubscriptionStatus === "active"
+    ) {
       return acc + 97.0
     }
     return acc
   }, 0)
 
-  // Retorna um objeto limpo, pronto para o Front usar
   return {
     allBarbershops,
     kpis: {

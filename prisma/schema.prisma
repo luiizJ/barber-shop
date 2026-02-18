@@ -17,13 +17,14 @@ model User {
   image         String?
 
   // Custom fields
-  phone String? // Para notificações de agendamento via Zap
-  role  UserRole @default(USER)
-
+  phone                    String? // Para notificações de agendamento via Zap
+  role                     UserRole  @default(USER)
+  stripeSubscriptionStatus String? 
+  stripeCustomerId         String?   @unique
   // Relacionamentos
-  accounts Account[]
-  sessions Session[]
-  bookings Booking[]
+  accounts                 Account[]
+  sessions                 Session[]
+  bookings                 Booking[]
 
   // Se ele for dono, quais barbearias ele tem?
   ownedBarbershops BarberShop[] @relation("BarberOwner")
@@ -110,14 +111,12 @@ model BarberShop {
   owner   User?   @relation("BarberOwner", fields: [ownerId], references: [id])
 
   // --- ESTRUTURA SAAS / STRIPE ---
-  stripeCustomerId         String?
   stripeSubscriptionId     String?
-  stripeSubscriptionStatus Boolean @default(true)
   stripePriceId            String? // Para saber se é plano Basic ou Pro
   subscriptionEndsAt       DateTime? // Data vital para controlar acesso
 
   // PLANO ATUAL
-  plan BarberShopPlan @default(START)
+  plan        BarberShopPlan @default(START)
   trialEndsAt DateTime?
 
   //  CONTROLE DO PLANO START (Trava de edição de preços)
@@ -170,7 +169,7 @@ model BarberServices {
 
   barberShopId String
   barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
-  isHidden    Boolean  @default(false)
+  isHidden     Boolean    @default(false)
 
   bookings Booking[]
 }

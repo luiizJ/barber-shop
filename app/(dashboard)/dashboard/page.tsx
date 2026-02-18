@@ -18,7 +18,13 @@ export default async function DashboardRootPage({
   if (!data) return redirect("/")
   // Se o usuário não tem nenhuma loja, mostra tela de "Criar Primeira Loja"
   if (data.shops.length === 0) {
-    return <DashboardEmptyState userName={data.userName} />
+    return (
+      <DashboardEmptyState
+        userName={data.userName}
+        isPro={data.isPro}
+        key={data.userName}
+      />
+    )
   }
   return (
     <div className="animate-in fade-in space-y-8 p-8 duration-500">
@@ -33,7 +39,12 @@ export default async function DashboardRootPage({
         {/*  Controles: Filtro de Data + Botão de Criar */}
         <div className="flex items-center gap-2">
           <DashboardDateFilter />
-          <CreateShopDialog />
+          {data.isMainShop && (
+            <CreateShopDialog
+              shopCount={data.shops.length}
+              isPro={data.isPro}
+            />
+          )}
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/lib/auth"
 import { z } from "zod"
+import { addDays } from "date-fns"
 
 // --- SCHEMAS DE VALIDAÇÃO ---
 
@@ -95,6 +96,7 @@ export async function createManualBarbershop(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== "ADMIN")
     throw new Error("Acesso Negado.")
+
   const rawData = { name: formData.get("name"), email: formData.get("email") }
   const data = createShopSchema.parse(rawData)
 
@@ -102,10 +104,11 @@ export async function createManualBarbershop(formData: FormData) {
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^\w-]+/g, "")
-  const owner = await db.user.findUnique({ where: { email: data.email } })
 
+  const owner = await db.user.findUnique({ where: { email: data.email } })
   if (!owner) throw new Error("Usuário não encontrado.")
 
+  // ✅ Criamos a barbearia SEM o campo stripeSubscriptionStatus
   await db.barberShop.create({
     data: {
       name: data.name,
@@ -116,19 +119,18 @@ export async function createManualBarbershop(formData: FormData) {
       phones: ["(00) 00000-0000"],
       ownerId: owner.id,
       plan: "START",
-      stripeSubscriptionStatus: true,
-      subscriptionEndsAt: new Date(
-        new Date().setDate(new Date().getDate() + 30),
-      ), // Já cria com 30 dias
+      subscriptionEndsAt: addDays(new Date(), 30),
     },
   })
 
-  if (owner.role === "USER") {
-    await db.user.update({
-      where: { id: owner.id },
-      data: { role: "BARBER_OWNER" },
-    })
-  }
+  // ✅ Atualizamos o usuário: status agora é STRING "active"
+  await db.user.update({
+    where: { id: owner.id },
+    data: {
+      role: owner.role === "USER" ? "BARBER_OWNER" : owner.role,
+      stripeSubscriptionStatus: "active",
+    },
+  })
 
   revalidatePath("/admin")
 }

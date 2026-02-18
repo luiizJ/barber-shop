@@ -9,17 +9,20 @@ import {
   TableRow,
 } from "@/app/components/ui/table"
 import { Badge } from "@/app/components/ui/badge"
-import { CheckCircle2, Ban } from "lucide-react"
+import { CheckCircle2, Ban, Clock } from "lucide-react" // Adicionei Clock para status pendentes
 import { ManageShopSheet } from "./ManageShopSheet"
 import { BarberShopPlan } from "@prisma/client"
 
+// 1. Interface Ajustada (Refletindo a mudança do Schema)
 interface Shop {
   id: string
   name: string
   plan: BarberShopPlan
   subscriptionEndsAt: Date | null
-  stripeSubscriptionStatus: boolean | null
-  owner: { email: string | null } | null
+  owner: {
+    email: string | null
+    stripeSubscriptionStatus: string | null
+  } | null
   _count: { bookings: number }
 }
 
@@ -28,7 +31,6 @@ interface SubscriptionsTableProps {
 }
 
 export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
-  // Função auxiliar visual (CORRIGIDA)
   function getDaysStatus(date: Date | null) {
     if (!date) return { text: "Sem data", color: "text-muted-foreground" }
 
@@ -70,9 +72,10 @@ export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
         <TableBody>
           {shops.map((shop) => {
             const statusInfo = getDaysStatus(shop.subscriptionEndsAt)
-
             const isPro = shop.plan === "PRO"
-            const status = shop.stripeSubscriptionStatus
+
+            // ✅ Nova lógica de status baseada na string do owner
+            const currentStatus = shop.owner?.stripeSubscriptionStatus
 
             return (
               <TableRow key={shop.id}>
@@ -90,12 +93,16 @@ export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
                 </TableCell>
 
                 <TableCell>
-                  {status === true && (
+                  {/* ✅ Lógica de renderização por string */}
+                  {currentStatus === "active" ? (
                     <div className="flex items-center text-xs font-medium text-green-600">
                       <CheckCircle2 className="mr-1 h-3 w-3" /> Ativo
                     </div>
-                  )}
-                  {status === false && (
+                  ) : currentStatus === "past_due" ? (
+                    <div className="flex items-center text-xs font-medium text-orange-600">
+                      <Clock className="mr-1 h-3 w-3" /> Pendente
+                    </div>
+                  ) : (
                     <div className="flex items-center text-xs font-bold text-red-600">
                       <Ban className="mr-1 h-3 w-3" /> Bloqueado
                     </div>
@@ -111,7 +118,6 @@ export function SubscriptionsTable({ shops }: SubscriptionsTableProps) {
                       : "—"}
                   </div>
                   {shop.subscriptionEndsAt && (
-                    //  AQUI: Usamos statusInfo.color e statusInfo.text direto
                     <span className={`text-xs ${statusInfo.color}`}>
                       ({statusInfo.text})
                     </span>

@@ -2,9 +2,13 @@ import { CreateShopDialog } from "../[slug]/components/CreateShopDialog"
 
 interface DashboardEmptyStateProps {
   userName?: string | null
+  isPro: boolean
 }
 
-export function DashboardEmptyState({ userName }: DashboardEmptyStateProps) {
+export function DashboardEmptyState({
+  userName,
+  isPro,
+}: DashboardEmptyStateProps) {
   return (
     <div className="animate-in fade-in flex h-[80vh] w-full flex-col items-center justify-center gap-6 text-center duration-700">
       <div className="space-y-2">
@@ -16,7 +20,7 @@ export function DashboardEmptyState({ userName }: DashboardEmptyStateProps) {
           começar.
         </p>
       </div>
-      <CreateShopDialog />
+      <CreateShopDialog shopCount={0} isPro={isPro} />
     </div>
   )
 }

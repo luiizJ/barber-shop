@@ -1,20 +1,42 @@
 import { authOptions } from "@/app/lib/auth"
 import { db } from "@/app/lib/prisma"
-import { getServerSession } from "next-auth"
 import {
-  startOfDay,
   endOfDay,
-  subDays,
-  startOfMonth,
   endOfMonth,
+  startOfDay,
+  startOfMonth,
+  subDays,
   subMonths,
 } from "date-fns"
+import { getServerSession } from "next-auth"
 
-export async function getDashboardMetrics(range: string = "today") {
+export async function getDashboardMetrics(
+  range: string = "today",
+  slug?: string,
+) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return null
 
-  // 1. Definição de Datas (Atual vs Anterior)
+  // 1. Busca os dados do Usuário + Todas as Lojas (Ordenadas por criação)
+  const user = await db.user.findUnique({
+    where: { id: (session.user as any).id },
+    include: {
+      ownedBarbershops: {
+        orderBy: { createdAt: "asc" }, // A primeira [0] sempre será a MATRIZ
+      },
+    },
+  })
+
+  if (!user) return null
+
+  // ✅ IDENTIFICAÇÃO DA MATRIZ
+  const mainShop = user.ownedBarbershops[0]
+  const isMainShop = mainShop?.slug === slug
+  const userShopsCount = user.ownedBarbershops.length
+
+  const isPro = user?.stripeSubscriptionStatus === "active"
+
+  // 2. Definição de Datas (Manteve igual)
   let dateStart: Date, dateEnd: Date
   let prevDateStart: Date, prevDateEnd: Date
   let comparisonLabel: string
@@ -45,13 +67,12 @@ export async function getDashboardMetrics(range: string = "today") {
       break
   }
 
-  // 2. Função auxiliar para buscar dados
+  // 3. Função auxiliar para buscar dados
   const fetchMetrics = async (start: Date, end: Date) => {
     const shops = await db.barberShop.findMany({
-      where: { ownerId: session.user.id },
+      where: { ownerId: (session.user as any).id },
       include: {
         bookings: {
-          // ⚠️ Confirme se é 'bookings' ou 'appointments'
           where: { date: { gte: start, lte: end } },
           include: { service: true },
         },
@@ -71,18 +92,19 @@ export async function getDashboardMetrics(range: string = "today") {
     return { shops, appointments, revenue }
   }
 
-  // 3. Executa as buscas em paralelo (Performance 🚀)
+  // 4. Executa as buscas em paralelo
   const [currentData, prevData] = await Promise.all([
     fetchMetrics(dateStart, dateEnd),
     fetchMetrics(prevDateStart, prevDateEnd),
   ])
 
-  // 4. Cálculo de Porcentagem
+  // 5. Cálculo de Porcentagem
   const calculateChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0
     return ((current - previous) / previous) * 100
   }
 
+  // --- RESULTADO FINAL ---
   return {
     shops: currentData.shops,
     totalRevenue: currentData.revenue,
@@ -93,6 +115,10 @@ export async function getDashboardMetrics(range: string = "today") {
       prevData.appointments,
     ),
     comparisonLabel,
-    userName: session.user.name,
+    userName: user?.name || session.user.name,
+    isPro,
+    // ✅ NOVAS PROPRIEDADES PARA O FRONT-END
+    isMainShop,
+    userShopsCount,
   }
 }

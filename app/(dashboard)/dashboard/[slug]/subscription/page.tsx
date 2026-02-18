@@ -3,8 +3,6 @@ import { authOptions } from "@/app/lib/auth"
 import { redirect } from "next/navigation"
 import { SubscriptionContent } from "./components/SubscriptionContent"
 import { getSubscriptionData } from "./actions/get-subscription-data"
-// 👇 Ajuste os caminhos de importação conforme onde seus arquivos estão
-// Se a pasta 'actions' estiver na raiz de 'app/subscription', use @/app/...
 
 export default async function ShopSubscriptionPage() {
   // 1. Auth

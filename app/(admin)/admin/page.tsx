@@ -36,7 +36,7 @@ export default async function SuperAdminDashboard() {
 
       <DashboardKpis data={kpis} />
 
-      <SubscriptionsTable shops={allBarbershops} />
+      <SubscriptionsTable shops={allBarbershops} key={allBarbershops.length} />
     </div>
   )
 }

@@ -277,7 +277,10 @@ export async function createBarbershop(formData: FormData) {
       // Se não é PRO, ela ganha os 15 dias de teste.
       const primaryShop = user?.ownedBarbershops[0]
       const planToSet = isPro ? "PRO" : "START"
-      const subscriptionDate = isPro ? primaryShop?.subscriptionEndsAt : null
+      const subscriptionDate =
+        isPro && primaryShop?.subscriptionEndsAt
+          ? primaryShop.subscriptionEndsAt
+          : null
       const trialDate = isPro ? null : addDays(new Date(), 15)
       // A. Cria a Barbearia
       const shop = await tx.barberShop.create({
